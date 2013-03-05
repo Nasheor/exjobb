@@ -1,0 +1,215 @@
+\documentclass[final,letterpaper,twoside,12pt,twocolumn]{report}
+% if you use "report", you get a seperate title page
+%\documentclass[final,letterpaper,twoside,12pt]{article}
+%
+
+\usepackage[utf8]{inputenc} 
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{empheq}
+
+\begin{document}
+\author{Vilhelm~Jutvik \thanks{To everyone at SICS and the NES group}}
+\date{\today}
+%\title{The adaption of the IKEv2 protocol for The Internet of Things MS Thesis project plan}
+\title{IPsec for the Contiki OS}
+
+\maketitle
+
+% 
+% en beskrivning av det problem som angripits: problemformulering och problemstrukturering;
+% en beskrivning av de metoder som använts för att lösa problemet;
+% tolkning och diskussion av resultat - en analys av hur väl problemet lösts;
+% om problemet ej lösts fullständigt, en beskrivning av de troliga orsakerna till detta - även negativa resultat och erfarenheter kan ofta vara värda att rapportera (så slipper andra göra om det);
+% innehållsförteckning;
+% litteraturförteckning.
+% Vidare skall
+% 
+% de egna metoderna granskas kritiskt;
+% en jämförelse med andras arbeten rörande liknande problem ingå.
+
+\begin{abstract}
+In this the work the author explores...
+\end{abstract}
+
+\tableofcontents
+
+\chapter{Populärvetenskaplig sammanfattning}
+nödvändig bakgrundsinformation för en allmänbildad läsare som inte nödvändigtvis är specialist inom området;
+
+hot and cold mediums
+
+\chapter{Introduction}
+The Internet has revolutionized communication. The author would like to argue that this happened because it drastically lowered the cost of communication by removing interface barriers, unifying standards and organizations. Internet is cheap while legacy, purpose-made, communication networks are expensive. These lowered costs allowed people to send and receive information at an enormous rate, creating new types of medias and services such as the blog, the social network, the search engine etc. Because of these benefits, we try to expand the Internet, and now strides are being made to connect the objects that we surround ourselves with, creating what's commonly called he `Internet of Things' (IoT). It's a vision of an extended Internet where household objects (radiators, lighting etc), sensors and actuators in industrial machinery, cars etc are put `online'. This is of importance to humans as its believed that the IoT will greatly reduce the cost for communication thing to thing and man to thing. This enables more information to be shared, and more information usually translates into a better understanding of the environment, which translates into a more efficient world. An example of this would be an Internet-connected temperature sensor in a room which gives the IoT-enabled radiators a better idea about when and how much heat to apply.
+
+Unlike a regular host on the Internet (e.g. a PC) an IoT device is often purpose-made for a few single tasks (e.g. measuring the temperature in the example above). This allows the computer's electronics to be small, cheap and consume little power, so little that it can be run of a non-rechargeable battery for the system's entire lifetime. The promise of cheap, ubiquitous and easily installable computers bundled with the Internet's ease of communication is what fuels the vision of an Internet of Things.
+
+Contiki is an operating system
+
+Contiki is small and resource efficient operating system that tries to address the above requirements. With only 35 kB of ROM and 8 kB RAM it can provide an IP stack as well as multitasking. The hardware is often composed of a small 16-bit CPU, a small non-rechargeable battery and a radio. Although this allows communication with the rest of the Internet, it cannot be done in privacy. Any host in the path of a message between it and any other host can read, stop or manipulate the data. This is problematic if the IoT device measures or controls something deemed important to humans, such as a door lock or a motion sensor in a burglar alarm. Therefore the author have investigated whether or no it's feasible to implement support for an Internet standard that enables hosts to communicate securely over the Internet; IPsec. IPsec is an IETF\footnote{Internet Engineering Task Force} standard that is a part of IPv6, the coming replacement to the current IP protocol. This thesis outlines its design, implementation and evaluation of this standard and its utility in the Contiki OS.
+
+
+
+%  For example;  As the hosts (computers) usually are located inside, or in the direct vicinity of the object of interest,    power is usually supplied by a small non-rechargeable battery and communicates by radio.\\
+% \\
+%  This implies that said devices must be able to use the same protocols and standards as the rest of the Internet. One such piece is the suite of security features offered by the IP protocol, called IPsec.\\
+% \\
+% Contiki is an OS for devices running on the Internet of Things. It features an implementation of the IP protocol and several other Internet standards. The purpose of this work is to add yet another standard to it; IPsec. IPsec is an extension to the IP protocol that enables hosts to communicate securely over the Internet. Naturally, there are several implementations of IPsec readily avaible, but we can't use them since they don't fit. IoT devices that runs Contiki are usually very constrained in memory as well as CPU, but above all, energy is most important. The typical IoT -device is battery powered. Because of this, the result of the work must be able to save resources whereever possible, 
+
+\section{Problem statement / Research question}
+Can IPsec used in 
+
+% The goal of this thesis is the investigate the feasibility of using IPsec in the Contiki operating system. This implies that the software implementing the standard should not only fit on the device's limited ROM memory, but be demonstrated to actually do something useful.
+
+% IPsec is an Internet standard for secure host-to-host communication. Some of its benefits have been mentioned above, but can it be implemented in Contiki?
+%will endow Contiki with secure communication facilities, but at what cost, if it's possible at all? 
+
+    %    Kan IPsec / IKE implementeras i Contiki på den här begränsade hårdvaran?
+    % -> Vad krävs för att contiki-implementation / min implmenettation ska anses vara användbar?
+    %          * Bevisa att den kan upprätta och hantera IKE -anslutningar
+    %          * Minnes och beräkningskraft
+					
+\section{Method}
+The simplest 
+IPsec is a part of the IPv6 standard. Therefore
+As Contiki already implements an IPv6 stack, the implementatio
+
+   Experimental CS. Implementera delar av standarden. Dvs, den uppfyller inte alla krav, men fungerar i de flesta fall.
+
+\subsection{Development process}
+The source code was managed using the Git source code revisioning system. Development was organized in such a way that the project was run in one branch\footnote{Git branches are similar in concept to those in other SCMS. ...} (hereafter called \emph{develop}) parallell to Contiki's master branch. Important patches / changes that occurred in Contiki while the development was underway chould thus simply be fetched / merged into \emph{develop}. Patches in develop that proved  was then merged in from the m
+	
+\section{Limitations}                                                                                                                                                                                                                              
+Erfarenhet av daglig drift. 
+	
+	Alternative approaches: Beräkna storleken på kryptobibliotek mm + skatta kodkraven på andra delar, summera sedan
+	Scientific contributions: Evaluering
+	Report structure
+
+\section{Alternative Approaches}
+	Contiki TLS
+
+\section{Scientific Contributions}
+AH removal
+
+\section{Report Structure}
+
+\chapter{Background}
+
+\section{IoT}
+Connect stuff
+
+\section{IPsec}
+Secures IP
+
+\section{IKEv2}
+Handshakes for IPsec
+
+\chapter{Design and Implementation}
+\section{Architecture}
+IPsec and IKE communicates through the databases SPD and SAD. The PAD doesn't need to be a database.
+
+The IPsec subsystem is implemented inside the uIP6 stack.
+
+[BIG image outlining what information is passed between the IP-stack, the IPsec processing subsystem, IKEv2 and the databases (SPD, SAD)]
+
+\section{IPsec}
+We implement IPsec by inserting hooks into the uIP-stack.
+
+\section{IKEv2}
+The IKEv2 service is implemented as a Contiki Process. Each session is modelled as a mealy state machine [img].
+
+The machine is built to be extended. The following is implemented as of now:
+
+
+\chapter{Evaluation}
+
+\section{Memory requirements}
+Maximum stack and heap requirements
+Per SA requirement
+
+\section{Latency}
+* IKE handshake: Energy and time. Total setup time.
+* IPsec packet: Energy required for receiving, energy required for transmitting. Roundtrip times.
+
+\chapter{Improvements}
+
+
+
+% SLUT!
+
+
+\section{IoT}
+
+SICS\footnote{Swedish Institute of Computer Science} have been conducting research the field of IoT for over a decade. The purpose is to explore, and try to solve, the problems in the software stack. One of these areas is end-to-end security between a host in the IoT network and one on the Internet.
+
+ This has resulted in the very small event driven operating system Contiki. 
+
+Why we want IoT.
+In order to bring IoT out of the lab and into the society it needs to be secure. A pair of hosts in the network must be able to authenticate each other and protect their communication from privy eyes by means of encryption. The solution concerned also needs to be standards-compliant with the rest of the Internet.
+
+This suggests that TLS or IPsec may be suitable.
+
+TLS secures a TCP connection. IPsec secures everything from the network layer and up. The purpose of this work is to implement IPsec and IKEv2 
+
+The topic of this work is to implement IPsec and IKEv2 with the purpose of investigating the following:
+
+
+\subsection{The Contiki OS}%\footnote{Internet of Things}}
+Contiki is an event based operating system...
+
+\subsection{IPsec}
+IPsec is an IETF\footnote{Internet Engineering Task Force} standard defined in RFC ...
+
+\subsection{TLS}
+TLS is a ...
+
+\section{Scope}
+
+The purpose of this thesis is to explore the IPsec venue; is it a feasible solution?
+
+\subsection{Motivation}
+
+The goal of the thesis is to write an implementation of IPsec and IKEv2 in order to prove that the following is possible:
+* Low power, resource constrained hardware can utilize ``heavy'' Internet-standards and asymmetric encryption
+* The implementation should be able to communicate with a wide range of systems
+
+From this, the following should be required in order to form a valid proof-of-concept:
+* The implementation should be polite towards other hosts. It should be able to handle a wide range of situations.
+* Where time does not allow for a full implementation of a certain functionality, it should be clear that the implementation can be extended without significant rewrites of other parts.
+
+The original scope was the implementation of the IKEv2 service as described in RFC 5996 [...] for the Contiki OS. After a more thourough investigation this was found not to be feasible.
+
+
+\chapter{Design}
+The purpose of the
+The original design goals requirements of the implementation were
+1) It should implement a subset of IPsec and IKEv2 where feasible, or 
+2) 
+chose
+choose
+chosen
+
+\section{Constraints}
+Memory, processing, energy...
+
+
+\chapter{Implementation}
+GCC, utveckling på PC-hårdvara
+Hanterverket
+(kort avsnitt)
+
+
+\chapter{Evaluation}
+Evaluation of the impl. in relation to the design goals
+
+
+\section{Performance and requirements}
+Processing and memory requirements
+
+\section{Design evaluation}
+Implications of design choices
+
+
+
+\end{document}

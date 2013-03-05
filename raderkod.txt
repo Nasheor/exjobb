@@ -1,0 +1,10 @@
+-> % git diff --stat master core/net/ipsec 
+45 files changed, 6924 insertions(+), 0 deletions(-)
+6000 klines
+
+-> % git diff --stat master core/net/uip6.c
+ core/net/uip6.c |  734 ++++++++++++++++++++++++++++++++++++++++++++-----------
+ 1 files changed, 585 insertions(+), 149 deletions(-)
+
+
+över 6000 rader kod

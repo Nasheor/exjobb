@@ -1,0 +1,50 @@
+
+
+IPsec
+=================================
+Major features implemented:
+	Replay protection
+	ESP
+	Transport mode
+	Traffic selectors (traffic multiplexing over SAs)
+	SAD, with SA expiration mechanism
+	SPD and related functions (incl. one SA offer for each SPD rule)
+	Encryption
+		ESP-NULL
+		AES-CTR, varying key length (only 128 bit tested). Partial rewrite of Simon's code.
+	Integrity
+		AES-XCBC. Partial rewrite of Simon's code.
+	
+	
+Major features not implemented:
+	AH
+	Tunnel mode
+	Various integrity and encryption algorithms tagged as REQUIRED
+
+
+IKEv2
+=================================
+Major features implemented:
+	State machine for responder
+	State machine for initiator
+	ECC DH (only DH group 25)
+	Authentication by means of pre-shared key
+	Traffic selector negotiation (note: this is only a simplification of section 2.9's algorithm)
+	SPD interface that allows multiple IKE SA offers
+	SK payload: Encryption and integrity is the same as in IPsec (it's a common interface)
+	Multiple concurrent sessions supported
+	Multiple child SAs per IKE SA
+	
+Major features not implemented:
+	Cookie handling (the code is there, but it's not tested)
+	Only tunnel mode supported
+	EAP
+	No NAT support whatsoever, anywhere
+	No IPcomp support
+	Only IDs of type ID_RFC822_ADDR (e-mail address) are supported
+	No support for Certificates as IDs, nor for authentication
+	
+
+Features that should be implemented in IKEv2, but haven't yet:
+Deletion of Child and IKE SAs (Delete payload)
+State machine Established can't create child SAs currently 

@@ -1,0 +1,23 @@
+Intro
+	Problem statemnet: Kan IPsec / IKE implementeras i Contiki på den här begränsade hårdvaran?
+				Vad krävs för att contiki-implementation / min implmenettation ska anses vara användbar?
+					* Demonstrera att den kan upprätta och hantera IKE -anslutningar
+					* Minnes och beräkningskraft
+					
+	
+	Method: Experimental CS. Implementera delar av standarden. Dvs, den uppfyller inte alla krav, men fungerar i de flesta fall.
+	
+	Limitations: Erfarenhet av daglig drift
+	
+	Alternative approaches: Beräkna storleken på kryptobibliotek mm + skatta kodkraven på andra delar, summera sedan
+	Scientific contributions: Evaluering
+	Report structure
+
+Background
+	Contiki
+
+Design and Implementation
+
+Evaluation
+	
+	

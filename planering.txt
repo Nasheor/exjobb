@@ -1,0 +1,24 @@
+IPsec och IKEv2
+
+Introduktion
+
+
+Interoperability
+
+
+Slutsatser:
+IPsec är komplext och flera funktioner överlappar varandra
+AH är redundant
+
+
+Viktigt att få en vetenskaplig koppling
+Tydligt problembeskrivning
+Anknytning till vad jag läst på kurser
+
+
+Utvärdering
+Kritisisk disk. av vad jag gjort
+
+Disk om var säkerhetslagret ska ligga
+
+Vill kritisera IPsec. Jämföra med TLS etc

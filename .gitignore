@@ -1,0 +1,9 @@
+.DS_Store
+*.aux
+*.dvi
+*~
+*.synctex.gz
+*.log
+*.lof
+*.toc
+thesis.pdf
