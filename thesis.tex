@@ -4,6 +4,7 @@
 %
 
 \usepackage[utf8]{inputenc} 
+%\usepackage[swedish]{babel}
 \usepackage{fancyhdr}
 \usepackage{graphicx}
 \usepackage{empheq}
@@ -69,6 +70,9 @@ As the IoT will control and monitor sensors as well as machines in our surroundi
 As the IoT will control and monitor sensors as well as machines in our surroundings, security is a natural concern. Internet (more specifically, the IP protocol) by itself does not offer any security guarantees by default. This is especially true in the IoT world where the physical layer often is provided by radio. Any device with suitable radio equipment can read IP-packets destined for others, create and send packets while imposing as another host and manipulate data in transmissions destined for somebody else. This is problematic if the IoT device measures or controls something deemed important to humans, such as a door lock or a motion sensor in a burglar alarm. When receiving a message in the case of the former, the host controlling the door lock wants to assert that: the identity of sender is correct; that the message have not been tampered with; and preferably, it should be encrypted so that no other host except the addressee can read it. At the same time, the technology enabling this must be supported by the lock (the IoT device) and the other host, which might be any type of machine anywhere on the Internet. IPsec is one of many similar standards designed to solve these problems.
 
 The difficulty of the work lies in making an implementation that is compatible with other hosts on the Internet (enabling communication), fulfilling the security requirements (correctness) while simultaneous assuring that the code is small enough to fit in the limited memory. This also relates to energy requirements, especially in the context of cryptography which is heavily used by IPsec, as computations consumes a sizable part of an IoT host's energy budget.
+
+\section{Research question}
+Can IPsec and IKEv2 be implemented within the current hardware boundaries while still being interopable with other Internet hosts?
  
 %There are several different solutions to these problems. One of them is IPsec, which is the standard that the author has chosen to implement for the Contiki OS. The main hurdle 
 %Solutions to these problems are provided by several different stan
@@ -94,29 +98,38 @@ The difficulty of the work lies in making an implementation that is compatible w
     %          * Minnes och beräkningskraft
 					
 \section{Method}
-The simplest 
-IPsec is a part of the IPv6 standard. Therefore
-As Contiki already implements an IPv6 stack, the implementatio
-
-   Experimental CS. Implementera delar av standarden. Dvs, den uppfyller inte alla krav, men fungerar i de flesta fall.
+Much of the research in IoT is carried out by experiments because of the highly applied nature of the field. Indeed, most of the Internet as-of-today, was constructed on the basis of principles surmised from experiments. Therefore, the author decided to  implement the various components that makes up a functional IPsec system and then test them. The tests were carried out by subjecting the system to common communication scenarios with other IPsec-enabled Internet hosts: handshaking a new secure connection; receiving and transmitting packets with various security policies applied; housekeeping of connections. The success or failure of the test is determined if it worked, or if it succeeded, how well it did so. Finally, memory consumption and cpu time is measured for the different tasks. It's the results of these tests that will form the basis of the evaluation of the 1) quality and workmanship of the implementation 2) suitability of IPsec for IoT in general.
 
 \subsection{Development process}
-The source code was managed using the Git source code revisioning system. Development was organized in such a way that the project was run in one branch\footnote{Git branches are similar in concept to those in other SCMS. ...} (hereafter called \emph{develop}) parallell to Contiki's master branch. Important patches / changes that occurred in Contiki while the development was underway chould thus simply be fetched / merged into \emph{develop}. Patches in develop that proved  was then merged in from the m
-	
-\section{Limitations}                                                                                                                                                                                                                              
-Erfarenhet av daglig drift. 
-	
-	Alternative approaches: Beräkna storleken på kryptobibliotek mm + skatta kodkraven på andra delar, summera sedan
-	Scientific contributions: Evaluering
-	Report structure
+The source code was managed using the Git source code revision system. Development was organized in such a way that the project was run in one branch\footnote{Git branches are similar in concept to those in other SCMS. ...} (hereafter called \emph{develop}) parallell to Contiki's master branch. Important patches / changes that occurred in Contiki while the development was underway could thus simply be fetched / merged into \emph{develop}. Patches in develop that proved  was then merged in from the 
+
+\section{Limitations}
+Firstly, the purpose of this work is to answer the questions raised in the problem statement, not to create an implementation that's ready for production use. Thus, parts of the standard that are not necessary to meet this end can be omitted. This also includes parts that are labeled as REQUIRED in the standard documents, as they're only necessary if you strive towards full compliance, which in terms of features arguably is superset of that of interoperability.
 
 \section{Alternative Approaches}
-	Contiki TLS
+There are many ways of securing communication in a computer network, far too many to review in this section. What follows is a swift review of the closest alternatives for security in IoT networks. A thorough review and comparison will be made of these in the discussion towards the end of this thesis.
+
+The traditional approach in the IoT world has been to secure communication by using the IEEE's 802.11.4 link layer and its security features. There are also plenty of research articles outlining completely new security schemes, but none of these have made it into and IETF standard as far as the author is aware. Another alternative is the IETF's TLS protocol\footnote{The TLS protocol is a successor to SSL} that operates next to the application layer, but no implementation of that has been completed as of today to the best of the author's knowledge.
+
+A final possibility would be to come to a conclusion by using analysis. Supposing that the main obstacle to a functional solution is that of ROM, RAM, CPU speed and energy requirements. As one can assume the cryptographic libraries to consume the majority of the resources, one can arrive at an approximation for the hardware requirements by benchmarking them stand-alone. This would certainly help in arriving at an upper bound for the hardware requirements, but the analysis would not tell us anything about the operational problems and benefits that a complete implementation would.
+
+%These can be ordered by the network layer\footnote{The notion of network layers is derived from the idealized OSI-model in which network protocols are ordered in a stack of seven layers.} at which they operate.
+
+%\paragraph{The link layer} can provide authentication, confidentiality and integrity if using the IEEE 802.15.4 radio link layer, commonly employed in IoT systems. The benefits are that it's transparent to 
+	
+%	Alternative approaches: Beräkna storleken på kryptobibliotek mm + skatta kodkraven på andra delar, summera sedan
+%	Scientific contributions: Evaluerin
+%	Report structure
 
 \section{Scientific Contributions}
-AH removal
+This report makes three scientific contributions. The first is the demonstration of that it's feasible to implement IPsec with dynamic key management and IKEv2 in the Contiki OS. The second is that it's possible to simplify the IPsec protocol in IPv6-IoT environments without sacrificing much in interoperability. The final is that IPsec's network-centric policy language is ill suited for ad-hoc, self-organized network environments, such as that created by the RPL\footnote{The Routing Protocol for Low-Power and Lossy Networks (RPL) is an IETF standard (RFC 6553) that creates dynamic routing topologies} routing protocol commonly used in conjunction with IoT.
 
 \section{Report Structure}
+Background
+Implementation
+Evaluation
+Discussion
+Conclusions and Future Work
 
 \chapter{Background}
 
