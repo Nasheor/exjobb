@@ -125,6 +125,9 @@ A final possibility would be to come to a conclusion by using analysis. Supposin
 This report makes three scientific contributions. The first is the demonstration of that it's feasible to implement IPsec with dynamic key management and IKEv2 in the Contiki OS. The second is that it's possible to simplify the IPsec protocol in IPv6-IoT environments without sacrificing much in interoperability. The final is that IPsec's network-centric policy language is ill suited for ad-hoc, self-organized network environments, such as that created by the RPL\footnote{The Routing Protocol for Low-Power and Lossy Networks (RPL) is an IETF standard (RFC 6553) that creates dynamic routing topologies} routing protocol commonly used in conjunction with IoT.
 
 \section{Report Structure}
+The purpose of the chapter \emph{Introduction} chapter is to give the reader an overview of the report. The next chapter, \emph{Background}, will begin by a discussion of the problems that are particular to the field of IoT and how Contiki is constructed. This will be followed by a brief recount of the background and design of IPsec and 802.11.4's security features. In \emph{Design and Implementation} the author outlines how the IPsec standard is adapted to IoT and Contiki. Simplifications and omissions of features are explained and argued for. The design is then evaluated in \emph{Evaluation} by measuring parameters such as time, energy and memory usage when sending and receiving data. Space will also be given to observations of a qualitative nature, such as how well the standard integrates with the Contiki OS. The author's opinions of the evaluation and suggestions for future work is given in \emph{Conclusion}.
+
+
 Background
 Implementation
 Evaluation
