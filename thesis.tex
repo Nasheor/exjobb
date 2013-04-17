@@ -142,13 +142,29 @@ Conclusions and Future Work
 The purpose of this chapter is to introduce the reader to the Contiki OS and the IPsec standard. A good understanding of these systems are necessary to understand the later chapter `Design and Implementation'.
 
 \section{Contiki}
-Contiki is \cite{dunkels04contiki}
+Contiki is an operating system designed for computers with severely constrained resources\cite{dunkels04contiki}. At the time of its original release in 2004 it was targeted at 8 bit microcontrollers, ROM in the order of 100 kB and RAM less than 20 kB\citep[1]{dunkels04contiki}. Power was usually supplies 
+* Purpose made for constrained environments with little memory, cpu and energy; like sensor networks
 
-\section{IPsec}
-Secures IP
+\paragraph{Hardware support} 
 
-\section{IKEv2}
-Handshakes for IPsec
+\paragraph{The application environment} is constructed with efficiency in mind.
+*Event driven
+* Single stack
+* Protothreads
+
+\paragraph{IP networking} is provided by the uIP stack.
+
+\section{Security Protocols in the IP stack (IPsec)}
+\paragraph{Security on the Internet} was, and is, as of today an unresolved issue in the author's opinion. Its architecture has always been open
+* Protects everything fromt he network level and up
+* Model
+* Symmetric encryption
+* Security associations
+
+\section{Establishing Secure Communication Channels (IKEv2)}
+* Handshakes for IPsec
+* Establishing security associations
+* Asymmetric encryption
 
 \chapter{Design and Implementation} 
 \section{Architecture}
