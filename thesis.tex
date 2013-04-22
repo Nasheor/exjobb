@@ -142,7 +142,7 @@ Conclusions and Future Work
 The purpose of this chapter is to introduce the reader to the Contiki OS and the IPsec standard. A good understanding of these systems are necessary to understand the later chapter `Design and Implementation'.
 
 \section{Contiki}
-Contiki is an operating system designed for computers with severely constrained resources\cite{dunkels04contiki}. At the time of its original release in 2004 it was targeted at 8 bit microcontrollers, ROM in the order of 100 kB and RAM less than 20 kB\citep[1]{dunkels04contiki}. Power was usually supplies 
+Contiki is an operating system designed for computers with severely constrained resources\cite{dunkels04contiki}. At the time of its original release in 2004 it was targeted at 8 bit micro controllers, ROM in the order of 100 kB and RAM less than 20 kB\citep[1]{dunkels04contiki}. Power was usually supplies 
 * Purpose made for constrained environments with little memory, cpu and energy; like sensor networks
 
 \paragraph{Hardware support} 
@@ -155,9 +155,12 @@ Contiki is an operating system designed for computers with severely constrained 
 \paragraph{IP networking} is provided by the uIP stack.
 
 \section{Security Protocols in the IP stack (IPsec)}
-\paragraph{Security on the Internet} was, and is, as of today an unresolved issue in the author's opinion. Its architecture has always been open
-* Protects everything fromt he network level and up
-* Model
+\paragraph{Security on the Internet} was, and is, as of today an unresolved issue in the author's opinion. As its protocol, IP, was originally designed and developed in the open world of academic computer science, no security considerations were made. Instead, the three properties of information security (confidentiality, authenticity, integrity) \citep[section 8.1]{vasseur10interconnecting} were provided by physically protecting the network hardware and the imposition of social norms among its users and operators. As the Internet grew, this and other weaknesses started to become problems. In 1995, the IETF\footnote{The Internet Engineering Task Force is the governing body of the development of Internet standards.} released a number of documents starting with RFC\footnote{RFC, or Request For Comment, is the collective name of the IETF's standards} 1883\cite{rfc1883} that defined IPv6, the planned successor of IPv4. IPsec was developed in conjunction with IPv6 and was until the advent of RFC 6434\cite{rfc6434} in late 2011 a mandatory part of a compliant IPv6 host. However, adaption of IPv6 has been slow despite growing technical problems with the still incumbent IPv4. The resistance to upgrade is widely attributed to the fact that the cost and risk (software adaption, operator training, equipment replacement etc) of making the change in most networks outweighs the potential benefits. This equation will certainly change in the coming years, if slowly. In the meantime, IPv6 has found to be a great boon to new networks like Internet connected smart phones, Internet-enabled set top TV-boxes and, naturally, the Internet of Things. In these cases it can be argued that the cost of adapting the legacy IPv4 is roughly the same as that of IPv6, while enjoying benefits of the later's simplicity, auto configuration and more.
+
+IPsec can be implemented 
+
+ architecture has always been open
+* Protects everything from the network level and up (Model)
 * Symmetric encryption
 * Security associations
 
@@ -196,7 +199,7 @@ Per SA requirement
 \chapter{Improvements}
 
 
-\bibliography{refs}
+\bibliography{refs,rfc}
 \bibliographystyle{plain}
 
 \end{document}
