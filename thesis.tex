@@ -1,4 +1,4 @@
-\documentclass[final,letterpaper,twoside,12pt,twocolumn]{report}
+\documentclass[final,letterpaper,twoside,11pt,onecolumn]{report}
 % if you use "report", you get a seperate title page
 %\documentclass[final,letterpaper,twoside,12pt]{article}
 %
@@ -9,6 +9,10 @@
 \usepackage{graphicx}
 \usepackage{empheq}
 \usepackage{natbib}
+\usepackage{url}
+
+\DeclareGraphicsExtensions{.pdf,.png,.jpg,.jpeg}
+\graphicspath{ {bilder/} }
 
 
 
@@ -154,10 +158,75 @@ Contiki is an operating system designed for computers with severely constrained 
 
 \paragraph{IP networking} is provided by the uIP stack.
 
-\section{Security Protocols in the IP stack (IPsec)}
-\paragraph{Security on the Internet} was, and is, as of today an unresolved issue in the author's opinion. As its protocol, IP, was originally designed and developed in the open world of academic computer science, no security considerations were made. Instead, the three properties of information security (confidentiality, authenticity, integrity) \citep[section 8.1]{vasseur10interconnecting} were provided by physically protecting the network hardware and the imposition of social norms among its users and operators. As the Internet grew, this and other weaknesses started to become problems. In 1995, the IETF\footnote{The Internet Engineering Task Force is the governing body of the development of Internet standards.} released a number of documents starting with RFC\footnote{RFC, or Request For Comment, is the collective name of the IETF's standards} 1883\cite{rfc1883} that defined IPv6, the planned successor of IPv4. IPsec was developed in conjunction with IPv6 and was until the advent of RFC 6434\cite{rfc6434} in late 2011 a mandatory part of a compliant IPv6 host. However, adaption of IPv6 has been slow despite growing technical problems with the still incumbent IPv4. The resistance to upgrade is widely attributed to the fact that the cost and risk (software adaption, operator training, equipment replacement etc) of making the change in most networks outweighs the potential benefits. This equation will certainly change in the coming years, if slowly. In the meantime, IPv6 has found to be a great boon to new networks like Internet connected smart phones, Internet-enabled set top TV-boxes and, naturally, the Internet of Things. In these cases it can be argued that the cost of adapting the legacy IPv4 is roughly the same as that of IPv6, while enjoying benefits of the later's simplicity, auto configuration and more.
+\section{IPsec}
 
-IPsec can be implemented 
+\section{IPv6's headers}
+\paragraph{Security on the Internet} was, and is, as of today an unresolved issue in the author's opinion. As its protocol, IP, was originally designed and developed in the open world of academic computer science, no security considerations were made. Instead, the three properties of information security (confidentiality, authenticity, integrity) \citep[section 8.1]{vasseur10interconnecting} were provided by physically protecting the network hardware and the imposition of social norms among its users and operators. As the Internet grew, this and other weaknesses started to become problems. In 1995, the IETF\footnote{The Internet Engineering Task Force is the governing body of the development of Internet standards.} released a number of documents starting with RFC\footnote{RFC, or Request For Comment, is the collective name of the IETF's standards} 1883\cite{rfc1883} that defined IPv6, the planned successor of IPv4. IPsec was developed in conjunction with IPv6 and was until the advent of RFC 6434\cite{rfc6434} in late 2011 a mandatory part of a compliant IPv6 host. However, adaption of IPv6 has been slow despite growing technical problems with the still incumbent IPv4. The resistance to upgrade is widely attributed to the fact that the cost and risk (software adaption, operator training, equipment replacement etc) of making the change in most networks outweighs the potential benefits. This equation will certainly change in the coming years, if slowly. In the meantime, IPv6 has found to be a great boon to new networks like Internet-connected smart phones, Internet-enabled set top TV-boxes and, naturally, the Internet of Things. In these cases it can be argued that the cost of adopting the legacy IPv4 is roughly the same as that of adopting IPv6, while enjoying benefits of the later's simplicity, auto configuration features and more\footnote{See chapter 15.1 in \cite{vasseur10interconnecting} for a brief discussion about the benefits of IPv6 over IPv4 in the context of IoT.}.
+
+\paragraph{Understanding the IP headers} are key to understanding IPsec. The author will therefore quickly review the structure of the IPv6 headers before moving on the explain their relationship to IPsec. Below the readers finds a schematic of the IPv6 header, also called the IPv6 `fixed header' for reasons that soon are to be discussed.
+
+\begin{figure}[here]
+   \includegraphics[width=0.9\textwidth]{wiki-ipv6-header}
+   \caption{The IPv6 header. Figure from \cite{wiki:ipv6_packet}.}
+   \label{fig:ipv6_packet}
+\end{figure}
+
+As the author assumes that the reader i acquainted with the general principles of IP networking, the discussion of the above header fields will be brief. \emph{Version} is always six; \emph{Traffic Class} (reminiscent of the IPv4 \emph{TOS} field) and \emph{Flow Label} are for flow and congestion control, which are of no concern to us; \emph{Payload Length} is the length of the payload field, including any so called `extension header' (more on this soon); \emph{Next Header} specifies the packet's transport layer protocol, or the first extension header's type if one is present; \emph{Hop Limit} is equivalent to IPv4's Time-To-Live field which is decremented by each router that it passes, ultimately to be discarded when it reaches zero.
+
+IPv4 placed all of its settings into one big header, many settings which as of today are rarely used, and there was no possibility of extending it for new features. The designers of IPv6 solved this problem in an ingenious way by keeping the fixed header (figure \ref{fig:ipv6_packet}) small and allowing it to be extended by a mechanism called \emph{extension headers}. The extension headers contain any optional information, information which can be intended for the packet's destination host and/or intermediate routers along its path. Although the information is usually supplied by the source host, some headers (such as \emph{Fragment}) can be altered and/or added by routers.
+
+\begin{figure}[here]
+   \includegraphics[width=0.9\textwidth]{ipv6-nextheader}
+   \caption{Illustration of IPv6's next header scheme. FIX! Not received permission! Source:http://www.zytrax.com/tech/protocols/ipv6.html}
+   \label{fig:ipv6_nextheader}
+\end{figure}
+
+\begin{figure}[here]
+   \includegraphics[width=0.9\textwidth]{wiki-ipv6-nextheader}
+   \caption{The generic mandatory part of an `extension header'. Figure from \cite{wiki:ipv6_packet}.}
+   \label{fig:wiki-ipv6-nextheader}
+\end{figure}
+
+The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv6-nextheader}). The field \emph{Next Header} denotes the type of extension header to come or, if this is the last extension header, the packet's type of transport layer; \emph{Hdr Ext Len} is the length of this extension header in multiples of eight octets, not including the first eight octets. The rest of the next header contains data that is specific to each next header type.
+
+\begin{figure}[h!]
+   \includegraphics[width=0.9\textwidth]{wiki-ipv6-listofextensionheaders}
+   \caption{This list covers a number of common extensions headers `next header'. List from \cite{wiki:ipv6_packet}.}
+   \label{fig:wiki-ipv6-nextheader}
+\end{figure}
+
+
+\section{The IPv6 AH extension header}
+\begin{figure}[h!]
+   \includegraphics[width=0.9\textwidth]{wiki-ipsec-ah}
+   \caption{The AH extension header. From \cite{wiki:ah_header}.}
+   \label{fig:wiki-ipsec-ah}
+\end{figure}
+
+The AH header guarantees the \emph{data integrity} and the \emph{authentication} (origin) of the IP packet which it is applied to. This is achieved by 
+
+\begin{figure}[h!]
+   \includegraphics[width=0.9\textwidth, trim=0 205 0 210]{wiki-mac}
+   \caption{Message Authentication Code. From \cite{wiki:mac}.}
+   \label{fig:wiki-mac}
+\end{figure}
+
+
+
+HMAC
+
+
+\section{The IPv6 ESP extension header}
+
+
+\section{The extension headers ESP and AH}
+IPsec makes use of two extension headers, ESP (Encapsulating Security Payload), and AH (Authentication Header). These are used for storing the protected data and products thereof such as checksums and identifying information.
+
+\paragraph{Two of these extension headers are ESP and AH extension headers are dedicated to IPsec}
+
+In order to understand what IPsec does and doesn't do, one has to understand the 
+
+\cite{wiki:ipv6_packet}
 
  architecture has always been open
 * Protects everything from the network level and up (Model)
@@ -289,6 +358,9 @@ Processing and memory requirements
 
 \section{Design evaluation}
 Implications of design choices
+
+\section{Recommendation}
+cite:Problem Areas for the IP Security Protocols
 
 
 
