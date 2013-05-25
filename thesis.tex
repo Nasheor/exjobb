@@ -80,7 +80,7 @@ As the IoT will control and monitor sensors as well as machines in our surroundi
 The difficulty of the work lies in making an implementation that is compatible with other hosts on the Internet (enabling communication), fulfilling the security requirements (correctness) while simultaneous assuring that the code is small enough to fit in the limited memory. This also relates to energy requirements, especially in the context of cryptography which is heavily used by IPsec, as computations consumes a sizable part of an IoT host's energy budget.
 
 \section{Research question}
-Can IPsec and IKEv2 be implemented within the current hardware boundaries while still being interopable with other Internet hosts?
+Can IPsec and IKEv2 be implemented within the current hardware boundaries while still being interoperable with other Internet hosts?
  
 %There are several different solutions to these problems. One of them is IPsec, which is the standard that the author has chosen to implement for the Contiki OS. The main hurdle 
 %Solutions to these problems are provided by several different stan
@@ -158,10 +158,33 @@ Contiki is an operating system designed for computers with severely constrained 
 
 \paragraph{IP networking} is provided by the uIP stack.
 
-\section{IPsec}
 
-\section{IPv6's headers}
+\section{Internet Security}
 \paragraph{Security on the Internet} was, and is, as of today an unresolved issue in the author's opinion. As its protocol, IP, was originally designed and developed in the open world of academic computer science, no security considerations were made. Instead, the three properties of information security (confidentiality, authenticity, integrity) \citep[section 8.1]{vasseur10interconnecting} were provided by physically protecting the network hardware and the imposition of social norms among its users and operators. As the Internet grew, this and other weaknesses started to become problems. In 1995, the IETF\footnote{The Internet Engineering Task Force is the governing body of the development of Internet standards.} released a number of documents starting with RFC\footnote{RFC, or Request For Comment, is the collective name of the IETF's standards} 1883\cite{rfc1883} that defined IPv6, the planned successor of IPv4. IPsec was developed in conjunction with IPv6 and was until the advent of RFC 6434\cite{rfc6434} in late 2011 a mandatory part of a compliant IPv6 host. However, adaption of IPv6 has been slow despite growing technical problems with the still incumbent IPv4. The resistance to upgrade is widely attributed to the fact that the cost and risk (software adaption, operator training, equipment replacement etc) of making the change in most networks outweighs the potential benefits. This equation will certainly change in the coming years, if slowly. In the meantime, IPv6 has found to be a great boon to new networks like Internet-connected smart phones, Internet-enabled set top TV-boxes and, naturally, the Internet of Things. In these cases it can be argued that the cost of adopting the legacy IPv4 is roughly the same as that of adopting IPv6, while enjoying benefits of the later's simplicity, auto configuration features and more\footnote{See chapter 15.1 in \cite{vasseur10interconnecting} for a brief discussion about the benefits of IPv6 over IPv4 in the context of IoT.}.
+
+\paragraph{IPsec is a suite of protocols} that secures IP packets in an end-to-end fashion. Flows of packets, distinguished by properties such as source and target address, transport layer protocol, etc can be defined and different security policies applied. The system is not only limited to \emph{host-to-host} packet flows, but also allows a host to act as a gateway (termed \emph{security gateway} in the IPsec standard), enabling a secure link between two networks (\emph{network-to-network}) or a network to a host (\emph{network-to-host}). The suite can be implemented either directly in the IP stack of a host, but may also be located between the link layer and the network layer\citep[section 3.3]{rfc4301}, facilitating retrofits of existing stacks.
+
+All important aspects of IPsec are controlled by three databases: the Security Association Database (\emph{SAD}); the Security Policy Database (\emph{SPD}); the Peer Authorization Database (\emph{PAD}). The standard stresses the fact that the implementation of these databases should not be viewed as pre-requisites for a compliant IPsec implementation, but that such a system should exhibit the very same behavior of a system that actually did. In the following paragraphs these databases will be used as constructs to explain the inner workings of IPsec, although, as the reader will learn in the chapter Implementation\ref{chap:Implementation}, the author has actually used these constructs in the final implementation as well. Finally, the system will be explained only in brief as the suite is simply too large for a thorough review in this thesis. The interested reader is advised to read the complete standard document\citep{rfc4301} starting at section 4.4 for an in-depth definition of the SAD, SPD and PAD.
+
+\paragraph{The SPD} stores 
+
+
+\paragraph{The SAD} stores 
+
+
+\paragraph{The PAD}
+
+Security policies are stored in in the \emph{Security Policy Database} (SPD). It consists of several entries, each consisting of the following fields: a \emph{selector} that defines a certain traffic flow; . The selector includes source address range, destination address) by means of \emph{}
+
+ are said to be members of a communication session for which the same security policies are applied. Such sessions can be   that can be implemented directly in the IP stack of a host or in a router 
+
+\paragraph{IPsec's security model} differs from that of the one commonly used by security protocols operating in the higher layers e.g. TLS and SSH. Instead of using primitives such as user identity or tickets to create secure connections or make policies, IPsec  uses the concept know to IP such as hosts, networks and upper layer protocols such as TCP or UDP.  and .. primitives known to IP; ports, transport layer protocols, networks and host IP-addresses. 
+
+host-to-host
+network-to-network
+SAD
+SPD
+
 
 \paragraph{Understanding the IP headers} are key to understanding IPsec. The author will therefore quickly review the structure of the IPv6 headers before moving on the explain their relationship to IPsec. Below the readers finds a schematic of the IPv6 header, also called the IPv6 `fixed header' for reasons that soon are to be discussed.
 
@@ -239,15 +262,37 @@ In order to understand what IPsec does and doesn't do, one has to understand the
 * Asymmetric encryption
 
 \chapter{Design and Implementation} 
-\section{Architecture}
+Implementing Internet standards in Contiki is often a challenging task. Internet standards are written with the presumption of hosts with vastly more capable hardware on the host's part. This requires the engineer to simplify parts of the standard, make generalizations, and omit parts altogether. This might be difficult as it requires good knowledge of the standard in question as well as the behavior of other implementations. The synthesis of this knowledge allows her to save hardware resources by making shortcuts in her implementation, shortcuts which might very well violate the standard document, but still exhibit a behavior which allows communication with the rest of the Internet. This a good example of the very practical, experimental, approach that is typical of Contiki's development culture.
+
+\section{Development process}
+The original goal of this thesis was to develop a working IKEv2 implementation on top of of an existing IPsec implementation already developed for Contiki. Therefore the literature review started with the RFCs\footnote{Described in so the so called RFC (Request for Comments) publication managed by the IETF and the Internet Society} covering that standard, continuing with other documents as the author's understanding of the field grew. 
+
+The author found the body of standard documents to be large, complex and described many features. It was unclear what effects a removal or alteration of a behavior could have on the implementation. Therefore the following principle was decided upon:
+
+\begin{quote}
+\emph{The guiding design principle of the implementation} is that is must be a subset of the standard and follow the described architecture as close as possible. Any deviation from this requires a thorough analysis of the security implications or the implementation will lose its greatest benefit - the security properties brought by the thoroughly vetted IPsec standard.
+\end{quote}
+
+Obviously, a thorough investigation and rework of the standards' internals would have the possibility of resulting in a more efficient implementation, but such an endeavor would require an effort that certainly would be outside the bounds of this work. 
+
+Simultaneously, the author worked with Contiki's source code and documentation in order to figure out how to integrate IKEv2 and the IPsec system into Contiki, a feat easier said than done as Contiki is quite different from the typical multi-user multi-tasking operating system. Implementation then proceeded in a top-down fashion where the data structures were written first, APIs secondly and then finally the actual algorithms.
+
+Contiki targets\footnote{A compiler is said to be \emph{targetting} a certain CPU's instruction set in the sense that it is configured to produce compatible binaries.} many different platforms, and two of them is Windows and Linux, i.e. the platform that the compiler is running on. This is called the \emph{native} target and is particular in the sense that Contiki (which is running as an ordinary process in the host's operating system) has access to the wast resources of the personal computer. Needless to say, this greatly facilitates debugging and was therefore used as the predominant build target during the development process. Peripherals such as sensors are emulated and network communication is achieved using a faked serial interface over a tunnel FIX:Look this up. 
+
+\paragraph{During final development} the target was changed from \emph{native} to \emph{msp430} (a CPU commonly used in IoT platforms due to its energy efficiency) as the focus turned from functionality to memory and speed improvements. Benchmarking and tuning has to be performed on the correct platform as libraries, the platform's instruction set, and compiler optimization possibilities are target specific. Instead of using actual hardware\footnote{Using real hardware for testing purposes turned out to be a large problem as no readily available platform had the required memory capacity to store the binaries.} Contiki was executed on emulated hardware using Contiki's popular simulation environment - Cooja\cite{osterlind06crosslevel}. Apart from providing emulation, Cooja features a complete experimental sandbox which will be further described in the chapter Evaluation.
+
+
+% As the author only had a rudimentary knowledge (roughly comparable as that of system administrator) of IPsec / IKEv2, he decided to that the safest way.
+
+\section{IPsec}
+We implement IPsec by inserting hooks into the uIP-stack.
+
 IPsec and IKE communicates through the databases SPD and SAD. The PAD doesn't need to be a database.
 
 The IPsec subsystem is implemented inside the uIP6 stack.
 
 [BIG image outlining what information is passed between the IP-stack, the IPsec processing subsystem, IKEv2 and the databases (SPD, SAD)]
 
-\section{IPsec}
-We implement IPsec by inserting hooks into the uIP-stack.
 
 \section{IKEv2}
 The IKEv2 service is implemented as a Contiki Process. Each session is modelled as a mealy state machine [img].

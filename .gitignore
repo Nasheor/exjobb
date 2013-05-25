@@ -7,3 +7,6 @@
 *.lof
 *.toc
 thesis.pdf
+papper
+*.bbl
+*.blg
