@@ -1,4 +1,4 @@
-\documentclass[final,letterpaper,twoside,11pt,onecolumn]{report}
+\documentclass[final,a4,twoside,11pt,onecolumn]{report}
 % if you use "report", you get a seperate title page
 %\documentclass[final,letterpaper,twoside,12pt]{article}
 %
@@ -41,6 +41,7 @@
 In this the work the author explores...
 \end{abstract}
 
+\setcounter{tocdepth}{4}
 \tableofcontents
 
 \chapter{Populärvetenskaplig sammanfattning}
@@ -164,19 +165,51 @@ Contiki is an operating system designed for computers with severely constrained 
 
 \paragraph{IPsec is a suite of protocols} that secures IP packets in an end-to-end fashion. Flows of packets, distinguished by properties such as source and target address, transport layer protocol, etc can be defined and different security policies applied. The system is not only limited to \emph{host-to-host} packet flows, but also allows a host to act as a gateway (termed \emph{security gateway} in the IPsec standard), enabling a secure link between two networks (\emph{network-to-network}) or a network to a host (\emph{network-to-host}). The suite can be implemented either directly in the IP stack of a host, but may also be located between the link layer and the network layer\citep[section 3.3]{rfc4301}, facilitating retrofits of existing stacks.
 
-All important aspects of IPsec are controlled by three databases: the Security Association Database (\emph{SAD}); the Security Policy Database (\emph{SPD}); the Peer Authorization Database (\emph{PAD}). The standard stresses the fact that the implementation of these databases should not be viewed as pre-requisites for a compliant IPsec implementation, but that such a system should exhibit the very same behavior of a system that actually did. In the following paragraphs these databases will be used as constructs to explain the inner workings of IPsec, although, as the reader will learn in the chapter Implementation\ref{chap:Implementation}, the author has actually used these constructs in the final implementation as well. Finally, the system will be explained only in brief as the suite is simply too large for a thorough review in this thesis. The interested reader is advised to read the complete standard document\citep{rfc4301} starting at section 4.4 for an in-depth definition of the SAD, SPD and PAD.
+\begin{figure}[h!]
+   \includegraphics[width=0.9\textwidth]{ipsec-flow}
+   \caption{IPsec processing of IP-packets. From \citep[p.8]{rfc4301}.}
+   \label{fig:ipsec-flow}
+\end{figure}
+\label{ipsec_proc}
+\paragraph{In the IPsec processing model} IP-packets are said to be passed between from \emph{protected} to \emph{unprotected} interfaces and vice versa. In the usual case, such as above, there are only one of each. The unprotected interface is always the interface connected to the insecure network, while the protected may be either connected to a secure network (the \emph{security gateway} configuration) or be attached to an operating system's IP stack (FIX: Is the last statement ok?). The flow of packets between the protected and unprotected interfaces are determined by policies set by the system administrator which are expressed in terms of network- and transport-layer primitives, i.e. IP addresses, port numbers and transport-layer protocols. The policy can cause a packet to be: thrown away (\emph{DISCARD}); forwarded over the IPsec boundary without any action taken (\emph{BYPASS}; removing or applying cryptographic protection of the packet (\emph{PROTECT}). The later is performed in the module named \emph{AH/ESP} in the fig. no. \ref{fig:ipsec-flow} which we will discuss in length further on (FIX: NO ref to place of disc.?).
 
-\paragraph{The SPD} stores 
+\paragraph{A central concept} of the IPsec model is the data structure named the \emph{Security Association} (SA). A Security Association defines a single simplex IP link and the security services it provides to the traffic that it carries. The services can be implemented by one of the two IPsec protocols: \emph{Authentication Header} (AH) and \emph{Encapsulating Security Payload} ESP. Bi-directional (duplex) traffic is enabled by creating a pair of SAs, one for each direction. As the author will show, the SA is used by almost all IPsec components and we will return to it from time to time.
+
+\paragraph{The policies and cryptographic secrets} used in IPsec processing are stored in three databases: the Security Association Database (\emph{SAD}); the Security Policy Database (\emph{SPD}); the Peer Authorization Database (\emph{PAD}). The standard stresses the fact that the implementation of these databases should not be viewed as pre-requisites for a compliant IPsec implementation, but that such a system should exhibit the very same behavior as that of a system whose architecture was implemented in line with the standard's model. In the following paragraphs these databases will be used as constructs to explain the inner workings of IPsec, although, as the reader will learn in the chapter Implementation\ref{chap:Implementation}, the author has actually used these constructs in the final implementation as well. Finally, the system will be explained only in brief as the suite is simply too large for a thorough review in this thesis. The interested reader is advised to read the complete standard document\citep{rfc4301} starting at section 4.4 for an in-depth definition of the SAD, SPD and PAD.
 
 
-\paragraph{The SAD} stores 
+\paragraph{The SPD} stores the policies that controls IPsec processing. It consists of an ordered list, where each entry is composed of a set of \emph{selectors}, \emph{PFP flags} and a \emph{processing action}. 
+
+The \emph{selector} is a data structure that represents a traffic pattern between hosts or networks and serves to distinguish what traffic the policy in question is referring to. The fields are as follows: Local address; Remote address; Next Layer Protocol (e.g. TCP, UDP, ICMP); Local Port (This is dependent upon protocol type, e.g. in the case of an ICMP packet message type and code is listed instead.); Remote Port. Full specifications are found in \citep[Section 4.4.1.1]{rfc4301}.
+
+PFP, or \emph{Populate From Packet} flags, are rules used in conjunction with the instantiation of an SA on the basis of the SPD entry. Instantiation in this context means that the newly created SA's selector (which has a similar purpose to a SPD entry's selector) is completed with information from that of the SPD entry's selector. However, for each of the selector's fields there is a corresponding PFP flag. If that flag is set, that field will be populated with information from the packet that triggered the instantiation. This process will be explained in detail further on as it's a central mechanism.
+
+The processing actions are the very same as described in \ref{ipsec_proc}: \emph{DISCARD}; \emph{BYPASS}; \emph{PROTECT}. The action \emph{PROTECT} differs from the the other actions in the sense that is also includes settings of how to protect the traffic, e.g. using a security gateway (tunneling), DSCP\footnote{Differentiated Services Code Point; QoS control for IPv6} services, various SA settings used in instantiation.
 
 
-\paragraph{The PAD}
+\paragraph{The SAD} stores the IPsec system's \emph{Security Associations} (SAs). The purpose of the database is to store the parameters of the system's SAs, but can be used to store other information as well. RFC 4301 outlines in section 4.4.2.1 fifteen required fields and because of space constraints, this section will only list the ones deemed most important by the author.
 
-Security policies are stored in in the \emph{Security Policy Database} (SPD). It consists of several entries, each consisting of the following fields: a \emph{selector} that defines a certain traffic flow; . The selector includes source address range, destination address) by means of \emph{}
+Security Parameter Index (SPI): Each SA is identified by a 32-bit value. This value is selected by the receiving end of an SA to be unique. This makes it possible for a system to uniquely associate inbound traffic with an SA using the SPI number as the key. Outbound traffic processing uses the SPI number to construct the IPsec headers.
 
- are said to be members of a communication session for which the same security policies are applied. Such sessions can be   that can be implemented directly in the IP stack of a host or in a router 
+Sequence Number Counter: Every IPsec system maintains a counter for each SA that is incremented by one for each packet that it carries. This information is used in IPsec packet processing and anti-replay protection (as will be explained below.)
+
+Anti-Replay Window: A counter and a bit-map used for detecting packets that have been replayed by an attacker\footnote{In a replay attack, a packet is intercepted by a man-in-the-middle with the purpose of delaying or repeating it. This can trick the targeted system into revealing secret information e.g. reusing the same keys in a stream cipher.}.
+
+Symmetric encryption information: Encryption algorithm and IPsec protocol type (AH or ESP) used by the SA along with necessary secrets (keys etc) and parameters.
+
+SA Lifetime: A limit at which the SA should be terminated, expressed in either time or the number of bytes transported by the SA.
+
+%each containing the parameters of , each consisting of the following substructures: a \emph{selector}, and an \emph{action}.
+
+
+\paragraph{The PAD} (section 4.4.3) is controlled by the administrator and used by the security association management protocol along with the SPD to negotiate new SAs. The core purpose of the database is to store 1) the identification tokens of the peers that the system is allowed to communicate with and 2) the authentication mechanism, parameters and data for each aforementioned peer.
+
+
+% stores the authentication requirements for 5. As SAs can be created both manually by an administrator as well as automatically by a Key Exchange service such as IKE, 
+
+%Security policies are stored in in the \emph{Security Policy Database} (SPD). It consists of several entries, each consisting of the following fields: a \emph{selector} that defines a certain traffic flow; . The selector includes source address range, destination address) by means of \emph{}
+% 
+%  are said to be members of a communication session for which the same security policies are applied. Such sessions can be   that can be implemented directly in the IP stack of a host or in a router 
 
 \paragraph{IPsec's security model} differs from that of the one commonly used by security protocols operating in the higher layers e.g. TLS and SSH. Instead of using primitives such as user identity or tickets to create secure connections or make policies, IPsec  uses the concept know to IP such as hosts, networks and upper layer protocols such as TCP or UDP.  and .. primitives known to IP; ports, transport layer protocols, networks and host IP-addresses. 
 
