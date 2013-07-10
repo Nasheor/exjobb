@@ -193,7 +193,7 @@ Security Parameter Index (SPI): Each SA is identified by a 32-bit value. This va
 
 Sequence Number Counter: Every IPsec system maintains a counter for each SA that is incremented by one for each packet that it carries. This information is used in IPsec packet processing and anti-replay protection (as will be explained below.)
 
-Anti-Replay Window: A counter and a bit-map used for detecting packets that have been replayed by an attacker\footnote{In a replay attack, a packet is intercepted by a man-in-the-middle with the purpose of delaying or repeating it. This can trick the targeted system into revealing secret information e.g. reusing the same keys in a stream cipher.}.
+Anti-Replay Window: A counter and a bit-map used for detecting packets that have been replayed by an attacker\footnote{In a replay attack, a packet is intercepted by a man-in-the-middle with the purpose of delaying or repeating it. This can trick the targeted system into revealing secret information e.g. reusing the same keys in a stream cipher.}. The anti-reply protection is available for the AH as well as the ESP security protocols (more on this later).
 
 Symmetric encryption information: Encryption algorithm and IPsec protocol type (AH or ESP) used by the SA along with necessary secrets (keys etc) and parameters.
 
@@ -252,7 +252,7 @@ The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv
 \end{figure}
 
 
-\section{The IPv6 AH extension header}
+\section{The AH protocol in IPv6}
 \begin{figure}[h!]
    % \includegraphics[width=0.9\textwidth]{wiki-ipsec-ah}
    % \caption{The AH extension header. From \cite{wiki:ah_header}.}
@@ -264,7 +264,7 @@ The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv
 
 \end{figure}
 
-The AH protocol's header (\emph{Authentication Header}) protocol guarantees the \emph{data integrity} and the \emph{authentication} (origin) of the IP packet which it is applied to. This is achieved by applying a \emph{Message Authentication Code} (MAC) to the packet's content and to the header's immutable fields using a key privy to the two parties.
+The AH protocol's header (\emph{Authentication Header}) protocol described in RFC 4302\cite{rfc4302} guarantees the \emph{data integrity} and the \emph{data authentication} (origin) of the IP packet which it is applied to. This is achieved by applying a \emph{Message Authentication Code} (MAC) to the packet's content and to the header's immutable fields using a key privy to the two parties.
 
 \begin{figure}[h!]
    \includegraphics[width=0.9\textwidth, trim=0 205 0 210]{wiki-mac}
@@ -281,29 +281,41 @@ The parameters of the process (such as key, key length and type of MAC algorithm
 
 
 
-\section{The IPv6 ESP extension header}
-The ESP protocol header, provides \emph{confidentiality} in addition to \emph{data integrity} and \emph{authentication}.
+\section{The ESP protocol in IPv6}
+
+\begin{figure}[h!]
+   % \includegraphics[width=0.9\textwidth]{wiki-ipsec-ah}
+   % \caption{The AH extension header. From \cite{wiki:ah_header}.}
+   % \label{fig:wiki-ipsec-ah}
+
+   \includegraphics[width=0.9\textwidth]{esp_nextheader}
+   \caption{The ESP IPv6 extension header. From \cite{rfc4303}.}
+   \label{fig:wiki-ipsec-esp}
+\end{figure}
+
+The ESP (Encapsulating Security Payload) protocol described in RFC 4303\cite{rfc4303}, provides \emph{confidentiality} and limited \emph{traffic flow confidentiality} in addition to AH's \emph{data integrity} and \emph{data authentication}. The term \emph{Encapsulating} is derived from the fact that the protocol is designed to encase everything that follows it in the packet (extension headers as well as payload). This practice is of benefit in itself, but rather it facilitates the implementation of confidentiality protection. For example, there are many popular algorithms which belongs to the block cipher family e.g. AES-CBC. Such algorithms only operates upon fixed sizes of data and therefore needs to pad\footnote{To `pad' data is to prepend or append white space characters (in the case of text documents) or null bytes to a string in order to increase it to a predetermined length.} the IP packet's payload to a multiple of the block length.
+
+The fact that confidentiality protection is optional makes ESP services identical to that of AH's, but only under certain circumstances. In `Design and Implementation' it will be shown how this fact can be exploited.
 
 
+% \cite{wiki:ipv6_packet}
+% 
+%  architecture has always been open
+% * Protects everything from the network level and up (Model)
+% * Symmetric encryption
+% * Security associations
+% 
 
-\section{The extension headers ESP and AH}
-IPsec makes use of two extension headers, ESP (Encapsulating Security Payload), and AH (Authentication Header). These are used for storing the protected data and products thereof such as checksums and identifying information.
 
-\paragraph{Two of these extension headers are ESP and AH extension headers are dedicated to IPsec}
+\section{Automatic negotiation of SAs (IKEv2)}
 
-In order to understand what IPsec does and doesn't do, one has to understand the 
+We have now explained the essentials of IPsec: the databases and their relations to each other and how they govern the flow of packets in the IPsec stack. This functionality is all that is required for an interoperable IPsec implementation. However, this requires all SAs to be set by the administrators of the systems in question. I.e. if two such hosts wants to communicate by IPsec the administrators must agree upon, and manually create, the SAs along with their encryption keys and associated settings. Naturally, we would like to automate this in order to lessen the work load. This is the purpose of the Key Management Protocol ... IKEv2 is one of them.
 
-\cite{wiki:ipv6_packet}
+% * Handshakes for IPsec
+% * Establishing security associations
+% * Asymmetric encryption
 
- architecture has always been open
-* Protects everything from the network level and up (Model)
-* Symmetric encryption
-* Security associations
 
-\section{Establishing Secure Communication Channels (IKEv2)}
-* Handshakes for IPsec
-* Establishing security associations
-* Asymmetric encryption
 
 \chapter{Design and Implementation} 
 Implementing Internet standards in Contiki is often a challenging task. Internet standards are written with the presumption of hosts with vastly more capable hardware on the host's part. This requires the engineer to simplify parts of the standard, make generalizations, and omit parts altogether. This might be difficult as it requires good knowledge of the standard in question as well as the behavior of other implementations. The synthesis of this knowledge allows her to save hardware resources by making shortcuts in her implementation, shortcuts which might very well violate the standard document, but still exhibit a behavior which allows communication with the rest of the Internet. This a good example of the very practical, experimental, approach that is typical of Contiki's development culture.
