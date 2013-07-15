@@ -175,7 +175,7 @@ Contiki is an operating system designed for computers with severely constrained 
 
 \paragraph{A central concept} of the IPsec model is the data structure named the \emph{Security Association} (SA). A Security Association defines a single simplex IP link and the security services it provides to the traffic that it carries. The services can be implemented by one of the two IPsec protocols: \emph{Authentication Header} (AH) and \emph{Encapsulating Security Payload} ESP. Bi-directional (duplex) traffic is enabled by creating a pair of SAs, one for each direction. As the author will show, the SA is used by almost all IPsec components and we will return to it from time to time.
 
-\paragraph{The policies and cryptographic secrets} used in IPsec processing are stored in three databases: the Security Association Database (\emph{SAD}); the Security Policy Database (\emph{SPD}); the Peer Authorization Database (\emph{PAD}). The standard stresses the fact that the implementation of these databases should not be viewed as pre-requisites for a compliant IPsec implementation, but that such a system should exhibit the very same behavior as that of a system whose architecture was implemented in line with the standard's model. In the following paragraphs these databases will be used as constructs to explain the inner workings of IPsec, although, as the reader will learn in the chapter Implementation\ref{chap:Implementation}, the author has actually used these constructs in the final implementation as well. Finally, the system will be explained only in brief as the suite is simply too large for a thorough review in this thesis. The interested reader is advised to read the complete standard document\citep{rfc4301} starting at section 4.4 for an in-depth definition of the SAD, SPD and PAD.
+\paragraph{The policies and cryptographic secrets} used in IPsec processing are stored in three databases: the Security Association Database (\emph{SAD}); the Security Policy Database (\emph{SPD}) and its caches; the Peer Authorization Database (\emph{PAD}). The standard stresses the fact that the implementation of these databases should not be viewed as pre-requisites for a compliant IPsec implementation, but that such a system should exhibit the very same behavior as that of a system whose architecture was implemented in line with the standard's model. In the following paragraphs these databases will be used as constructs to explain the inner workings of IPsec, although, as the reader will learn in the chapter Implementation\ref{chap:Implementation}, the author has actually used these constructs in the final implementation as well. Finally, the system will be explained only in brief as the IPsec suite is simply too large for a thorough review in this thesis. The interested reader is advised to read the complete standard document\citep{rfc4301} starting at section 4.4 for an in-depth definition of the SAD, SPD and PAD.
 
 
 \paragraph{The SPD} stores the policies that controls IPsec processing. It consists of an ordered list, where each entry is composed of a set of \emph{selectors}, \emph{PFP flags} and a \emph{processing action}. 
@@ -184,8 +184,15 @@ The \emph{selector} is a data structure that represents a traffic pattern betwee
 
 PFP, or \emph{Populate From Packet} flags, are rules used in conjunction with the instantiation of an SA on the basis of the SPD entry. Instantiation in this context means that the newly created SA's selector (which has a similar purpose to a SPD entry's selector) is completed with information from that of the SPD entry's selector. However, for each of the selector's fields there is a corresponding PFP flag. If that flag is set, that field will be populated with information from the packet that triggered the instantiation. This process will be explained in detail further on as it's a central mechanism.
 
-The processing actions are the very same as described in \ref{ipsec_proc}: \emph{DISCARD}; \emph{BYPASS}; \emph{PROTECT}. The action \emph{PROTECT} differs from the the other actions in the sense that is also includes settings of how to protect the traffic, e.g. using a security gateway (tunneling), DSCP\footnote{Differentiated Services Code Point; QoS control for IPv6} services, various SA settings used in instantiation.
+The \emph{processing actions} are the very same as described in \ref{ipsec_proc}: \emph{DISCARD}; \emph{BYPASS}; \emph{PROTECT}. The action \emph{PROTECT} differs from the the other actions in the sense that is also includes settings of how to protect the traffic, e.g. using a security gateway (tunneling), DSCP\footnote{Differentiated Services Code Point; QoS for IPv6} services, various SA settings used in instantiation.
 
+\paragraph{The SPD's caches} are used for 1) speeding up matching 2) associating a selector for outgoing traffic with an SA in the SAD.
+
+SPD-S outbound prot. traffic
+SPD-O outbound nonprot. traffic
+SPD-I inbound non
+
+% The IPsec implementation context determines how selectors are used. For example, a native host implementation typically makes use of a socket interface. When a new connection is established, the SPD can be consulted and an SA bound to the socket. Thus, traffic sent via that socket need not result in additional lookups to the SPD (SPD-O and SPD-S) cache. In contrast, a BITS, BITW, or security gateway implementation needs to look at each packet and perform an SPD-O/SPD-S cache lookup based on the selectors.
 
 \paragraph{The SAD} stores the IPsec system's \emph{Security Associations} (SAs). The purpose of the database is to store the parameters of the system's SAs, but can be used to store other information as well. RFC 4301 outlines in section 4.4.2.1 fifteen required fields and because of space constraints, this section will only list the ones deemed most important by the author.
 
@@ -193,7 +200,7 @@ Security Parameter Index (SPI): Each SA is identified by a 32-bit value. This va
 
 Sequence Number Counter: Every IPsec system maintains a counter for each SA that is incremented by one for each packet that it carries. This information is used in IPsec packet processing and anti-replay protection (as will be explained below.)
 
-Anti-Replay Window: A counter and a bit-map used for detecting packets that have been replayed by an attacker\footnote{In a replay attack, a packet is intercepted by a man-in-the-middle with the purpose of delaying or repeating it. This can trick the targeted system into revealing secret information e.g. reusing the same keys in a stream cipher.}. The anti-reply protection is available for the AH as well as the ESP security protocols (more on this later).
+Anti-Replay Window: A counter and a bit-map used for detecting packets that have been replayed by an attacker\footnote{In a replay attack, a packet is intercepted by a man-in-the-middle with the purpose of delaying or repeating it. This can trick the targeted system into revealing secret information e.g. reusing the same keys in a stream cipher.}. The anti-reply protection is available for the AH as well as the ESP security protocols, but only when using automatic key management (more on this later).
 
 Symmetric encryption information: Encryption algorithm and IPsec protocol type (AH or ESP) used by the SA along with necessary secrets (keys etc) and parameters.
 
@@ -307,9 +314,42 @@ The fact that confidentiality protection is optional makes ESP services identica
 % 
 
 
-\section{Automatic negotiation of SAs (IKEv2)}
+\section{Automatic key management}%{Automatic negotiation of SAs (IKEv2)}
 
-We have now explained the essentials of IPsec: the databases and their relations to each other and how they govern the flow of packets in the IPsec stack. This functionality is all that is required for an interoperable IPsec implementation. However, this requires all SAs to be set by the administrators of the systems in question. I.e. if two such hosts wants to communicate by IPsec the administrators must agree upon, and manually create, the SAs along with their encryption keys and associated settings. Naturally, we would like to automate this in order to lessen the work load. This is the purpose of the Key Management Protocol ... IKEv2 is one of them.
+We have now explained the essentials of IPsec: the databases and their relations to each other and how they govern the flow of packets in the IPsec stack. This functionality is all that is required for an interoperable IPsec implementation. However, this requires all SAs to be set by the administrators of the systems in question. I.e. if two such hosts wants to communicate by IPsec the administrators must agree upon, and manually create, the SAs along with their encryption keys and associated settings. Naturally, we would like to automate this in order to lessen the human's workload. This is the purpose of an IPsec Key Management Protocol. At of the time of this document's writing, there are several protocols: IKE (defined in RFC 2407 - 2409)\cite{rfc2407}\cite{rfc2408}\cite{rfc2409}; IKEv2 (RFC 5996)\cite{rfc5996}; KINK (RFC 4330)\cite{rfc4330} and IPSECKEY (RFC 4025)\cite{rfc4025}. What they all have in common is that they solve the problem of automated key management, albeit in different ways, and that they all interface with IPsec through its databases.
+
+However, this thesis will henceforth only discuss IKEv2 as it's the de-facto standard and, more importantly, the original target of study for this thesis. IKEv2 is the successor to IKE that was widely regarded to be a standard that suffered from unnecessarily complicated and vague standards documents. This issues were addressed in IKEv2 and resulted in, most importantly: better interoperability among implementations; faster keying handshake; less complex codebase.
+
+\subsection{Overview}
+As previously stated, IKEv2 is a component that is wholly external to the parts that we have covered so far (IPsec packet processing, SPD, SAD etc). The former are usually, in a general purpose operating system, implemented in the kernel\footnote{Linux's current IPsec implementation follows this model, and the author believes Microsoft's equivalent for Windows does so as well.} while the latter is written as service running in user space. This is the preferred method on an IPsec host as IPsec's packet processing mechanism needs to be implemented in conjunction with the OS' network stack (referred to as `bump-in-the-stack' or `native' in RFC 4301\citep[p.10-11]{rfc4301}) while IKEv2 is shaped into a user-space service. Naturally, we want as much code as possible to run in user space as it facilitates development and allows better integration with the rest of the operating system.
+
+\subsection{Interfaces}
+(PICTURE) IPsec processing, SPD, SAD, PAD <-> IKEv2
+
+As stated earlier, IKEv2 communicates with IPsec by manipulating its databases. However, what has not been mentioned is that the IPsec processing system can signal IKEv2 as well. One such case is when the need for a new SA arises. Consider the following scenario:
+
+\begin{quotation}
+An application on the host sends data destined for another host. When the resulting packet is received by the IPsec processing mechanism it tries to determine wether or not the packet is to be protected by trying to match its destination address with the selectors found in the SPD and its caches. If found in SPD and req. prot. invoke IKE.
+
+\end{quotation}
+
+%The same procedure occurs upon SA expiration: expiration of an SA in the SAD causes IPsec to signal IKEv2 that it needs to negotiate a new one.
+
+\subsection{Performing a handshake}
+FSM diagram of a handshake
+
+\subsection{Putting it all together}
+Final review of IPsec processing mechanism
+
+% SKRIV-ANTECKNINGAR
+% 0715: Måste säga något om tunnlar. Vart lägger jag det?
+
+
+\subsection{Headers and Payloads}
+IKEv2 payloads
+
+Encryption payload's simmilarity to ESP
+
 
 % * Handshakes for IPsec
 % * Establishing security associations
