@@ -186,11 +186,23 @@ PFP, or \emph{Populate From Packet} flags, are rules used in conjunction with th
 
 The \emph{processing actions} are the very same as described in \ref{ipsec_proc}: \emph{DISCARD}; \emph{BYPASS}; \emph{PROTECT}. The action \emph{PROTECT} differs from the the other actions in the sense that is also includes settings of how to protect the traffic, e.g. using a security gateway (tunneling), DSCP\footnote{Differentiated Services Code Point; QoS for IPv6} services, various SA settings used in instantiation.
 
-\paragraph{The SPD's caches} are used for 1) speeding up matching 2) associating a selector for outgoing traffic with an SA in the SAD.
+\paragraph{The SPD's caches} can be divided into three different sections: SPD-O outbound traffic that is not to be protected; SPD-S for outbound traffic that is to be protected; SPD-I for all incoming traffic. The entries contains the same fields as the SPD, with the exception of the PFP (`Populate From Packet', as described above) field which is not present. From a functional point of view, each entry is an \emph{instantiation} of an SPD entry. That implies that each entry's selector is a subset of one of the SPD's entry's selectors. The IPsec processing mechanism creates such entries in response to encountering traffic that uses one of the SPD's entries. This is made because of two reasons: 
 
-SPD-S outbound prot. traffic
-SPD-O outbound nonprot. traffic
-SPD-I inbound non
+\begin{quotation}1) Lookups in the SPD can be slow on large systems with many SPD entries. The SPD cache is faster\footnote{As to the question of why the SPD's cache allows a faster lookup, the author has to direct the reader to RFC 4301. This speedup is hardly relevant to the thesis in question and thus the curious reader is encouraged to start reading at section 5, taking extra care to read the parts about de-correlation.}.
+\end{quotation}
+
+\begin{quotation}2) a rule in the SPD can order traffic for a large address space to be protected. That address-space can contain many hosts, and each host can in turn demand different SAs for different traffic (e.g. different SAs for traffic over TCP and UDP). Thus, one realizes that each SA must explicitly define what traffic it carries. This is one of the purposes of the SPD-S cache. Each entry corresponds to an SA and its selector defines its traffic.
+\end{quotation}
+
+It's unfortunately hard to get a good overview of the SPD's caching system as the information is sprinkled over large parts of RFC 4301. The author recommends the curious reader to begin reading at section 5, `IP traffic processing'\citep[Section 5]{rfc4301}.
+
+
+
+% SPD-S outbound prot. traffic: Selectors and more goes here for instansiated SAs
+% SPD-O outbound nonprot. traffic: fast lookups
+% SPD-I inbound nonprot traffic: fast lookups
+
+%There is nominally one cache per SPD.
 
 % The IPsec implementation context determines how selectors are used. For example, a native host implementation typically makes use of a socket interface. When a new connection is established, the SPD can be consulted and an SA bound to the socket. Thus, traffic sent via that socket need not result in additional lookups to the SPD (SPD-O and SPD-S) cache. In contrast, a BITS, BITW, or security gateway implementation needs to look at each packet and perform an SPD-O/SPD-S cache lookup based on the selectors.
 
