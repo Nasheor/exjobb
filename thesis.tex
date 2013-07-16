@@ -326,8 +326,7 @@ The fact that confidentiality protection is optional makes ESP services identica
 % 
 
 
-\section{Automatic key management}%{Automatic negotiation of SAs (IKEv2)}
-
+\section{Automatic key management (IKEv2)}%{Automatic negotiation of SAs (IKEv2)}
 We have now explained the essentials of IPsec: the databases and their relations to each other and how they govern the flow of packets in the IPsec stack. This functionality is all that is required for an interoperable IPsec implementation. However, this requires all SAs to be set by the administrators of the systems in question. I.e. if two such hosts wants to communicate by IPsec the administrators must agree upon, and manually create, the SAs along with their encryption keys and associated settings. Naturally, we would like to automate this in order to lessen the human's workload. This is the purpose of an IPsec Key Management Protocol. At of the time of this document's writing, there are several protocols: IKE (defined in RFC 2407 - 2409)\cite{rfc2407}\cite{rfc2408}\cite{rfc2409}; IKEv2 (RFC 5996)\cite{rfc5996}; KINK (RFC 4330)\cite{rfc4330} and IPSECKEY (RFC 4025)\cite{rfc4025}. What they all have in common is that they solve the problem of automated key management, albeit in different ways, and that they all interface with IPsec through its databases.
 
 However, this thesis will henceforth only discuss IKEv2 as it's the de-facto standard and, more importantly, the original target of study for this thesis. IKEv2 is the successor to IKE that was widely regarded to be a standard that suffered from unnecessarily complicated and vague standards documents. This issues were addressed in IKEv2 and resulted in, most importantly: better interoperability among implementations; faster keying handshake; less complex codebase.
@@ -335,32 +334,50 @@ However, this thesis will henceforth only discuss IKEv2 as it's the de-facto sta
 \subsection{Overview}
 As previously stated, IKEv2 is a component that is wholly external to the parts that we have covered so far (IPsec packet processing, SPD, SAD etc). The former are usually, in a general purpose operating system, implemented in the kernel\footnote{Linux's current IPsec implementation follows this model, and the author believes Microsoft's equivalent for Windows does so as well.} while the latter is written as service running in user space. This is the preferred method on an IPsec host as IPsec's packet processing mechanism needs to be implemented in conjunction with the OS' network stack (referred to as `bump-in-the-stack' or `native' in RFC 4301\citep[p.10-11]{rfc4301}) while IKEv2 is shaped into a user-space service. Naturally, we want as much code as possible to run in user space as it facilitates development and allows better integration with the rest of the operating system.
 
-\subsection{Interfaces}
-(PICTURE) IPsec processing, SPD, SAD, PAD <-> IKEv2
+\subsection{Negotiating SAs}
+IKEv2 communicates with other IKEv2 capable hosts by means of UDP datagrams on port 500. As the purpose of the communication is to negotiate new SAs, the communication can not be protected by any IPsec SAs. Therefore, a correctly configured IPsec host must allow non-protected traffic on this UDP port. In this section we will explain how IKEv2 itself creates a secure communication channel for its datagrams. This begins with the following exchange of data, as described in IKEv2 standards document, RFC 5996\citep[p.5]{rfc5996}:  
 
-As stated earlier, IKEv2 communicates with IPsec by manipulating its databases. However, what has not been mentioned is that the IPsec processing system can signal IKEv2 as well. One such case is when the need for a new SA arises. Consider the following scenario:
 
 \begin{quotation}
-An application on the host sends data destined for another host. When the resulting packet is received by the IPsec processing mechanism it tries to determine wether or not the packet is to be protected by trying to match its destination address with the selectors found in the SPD and its caches. If found in SPD and req. prot. invoke IKE.
-
+All IKE communications consist of pairs of messages: a request and a response. The pair is called an `exchange', and is sometimes called a `request/response pair'. The first exchange of messages establishing an IKE SA are called the IKE\_SA\_INIT and IKE\_AUTH exchanges; subsequent IKE exchanges are called the CREATE\_CHILD\_SA or INFORMATIONAL exchanges. In the common case, there is a single IKE\_SA\_INIT exchange and a single IKE\_AUTH exchange (a total of four messages) to establish the IKE SA and the first Child SA. In exceptional cases, there may be more than one of each of these exchanges. In all cases, before any other exchange all IKE\_SA\_INIT exchanges MUST complete type, then all IKE\_AUTH exchanges MUST complete, and following that, any number of CREATE\_CHILD\_SA and INFORMATIONAL exchanges may occur in any order. In some scenarios, only a single Child SA is needed between the IPsec endpoints, and therefore there would be no additional exchanges. Subsequent exchanges MAY be used to establish additional Child SAs between the same authenticated pair of endpoints and to perform housekeeping functions.
 \end{quotation}
+
+The `IKE SA' referred to in the above text is an type of SA that is only for IKE communication. It is not used by the IPsec processing system, but only by the IKE service to secure its communication with other hosts. The creation of the `Child SA' is the final goal of the IKE connection - an SA to be used by the IPsec system to protect some part of the host's traffic. Its name can be derived from the fact that its cryptographic material is based upon that of the IKE SA's i.e. it can be said to be a descendent. On the next page (no. 6), the standard continues by providing more details about the SA negotiation:
+
+\begin{quotation}
+The first exchange of an IKE session, IKE\_SA\_INIT, negotiates security parameters for the IKE SA, sends nonces, and sends Diffie- Hellman values. The second exchange, IKE\_AUTH, transmits identities, proves knowledge of the secrets corresponding to the two identities, and sets up an SA for the first (and often only) AH or ESP Child SA (unless there is failure setting up the AH or ESP Child SA, in which case the IKE SA is still established without the Child SA). The types of subsequent exchanges are CREATE\_CHILD\_SA (which creates a Child SA) and INFORMATIONAL (which deletes an SA, reports error conditions, or does other housekeeping). Every request requires a response. An INFORMATIONAL request with no payloads (other than the empty Encrypted payload required by the syntax) is commonly used as a check for liveness. These subsequent exchanges cannot be used until the initial exchanges have completed.
+\end{quotation}
+
+As UDP is an unreliable transport layer, IKEv2 includes a mechanism for retransmission:
+
+\begin{quotation}
+An IKE message flow always consists of a request followed by a response. It is the responsibility of the requester to ensure reliability. If the response is not received within a timeout interval, the requester needs to retransmit the request (or abandon the connection).
+\end{quotation}
+
+
+
+
+%FSM diagram of a handshake??
+
+
+% \subsection{Interfaces}
+% (PICTURE) IPsec processing, SPD, SAD, PAD <-> IKEv2
+% 
+% As stated earlier, IKEv2 communicates with IPsec by manipulating its databases. However, what has not been mentioned is that the IPsec processing system can signal IKEv2 as well. One such case is when the need for a new SA arises. Consider the following scenario:
+% 
+% \begin{quotation}
+% An application on the host sends data destined for another host. When the resulting packet is received by the IPsec processing mechanism it tries to determine wether or not the packet is to be protected by trying to match its destination address with the selectors found in the SPD and its caches. If found in SPD and req. prot. invoke IKE.
+% 
+%\end{quotation}
 
 %The same procedure occurs upon SA expiration: expiration of an SA in the SAD causes IPsec to signal IKEv2 that it needs to negotiate a new one.
 
-\subsection{Performing a handshake}
-FSM diagram of a handshake
 
-\subsection{Putting it all together}
-Final review of IPsec processing mechanism
+% \subsection{Putting it all together}
+% Final review of IPsec processing mechanism
 
 % SKRIV-ANTECKNINGAR
 % 0715: Måste säga något om tunnlar. Vart lägger jag det?
-
-
-\subsection{Headers and Payloads}
-IKEv2 payloads
-
-Encryption payload's simmilarity to ESP
 
 
 % * Handshakes for IPsec
