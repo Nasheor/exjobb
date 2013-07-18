@@ -150,12 +150,15 @@ The purpose of this chapter is to introduce the reader to the Contiki OS and the
 Contiki is an operating system designed for computers with severely constrained resources\cite{dunkels04contiki}. At the time of its original release in 2004 it was targeted at 8 bit micro controllers, ROM in the order of 100 kB and RAM less than 20 kB\citep[1]{dunkels04contiki}. Power was usually supplies 
 * Purpose made for constrained environments with little memory, cpu and energy; like sensor networks
 
-\paragraph{Hardware support} 
+\paragraph{Hardware support}
+From 8-bit to 32-bit Cortex M3. Requires bla bla ROM and RAM.
+Radios
 
 \paragraph{The application environment} is constructed with efficiency in mind.
-*Event driven
+* Event driven
 * Single stack
 * Protothreads
+
 
 \paragraph{IP networking} is provided by the uIP stack.
 
@@ -354,7 +357,7 @@ As UDP is an unreliable transport layer, IKEv2 includes a mechanism for retransm
 An IKE message flow always consists of a request followed by a response. It is the responsibility of the requester to ensure reliability. If the response is not received within a timeout interval, the requester needs to retransmit the request (or abandon the connection).
 \end{quotation}
 
-
+After the handshake is complete (i.e. the creation of the SA for the IPsec traffic), the IKE SA is retained for future use as this will negate the need to re-create it whenever child SAs shared with that particular host need to be created or destroyed.
 
 
 %FSM diagram of a handshake??
@@ -394,9 +397,9 @@ The original goal of this thesis was to develop a working IKEv2 implementation o
 
 The author found the body of standard documents to be large, complex and described many features. It was unclear what effects a removal or alteration of a behavior could have on the implementation. Therefore the following principle was decided upon:
 
-\begin{quote}
+\begin{quotation}
 \emph{The guiding design principle of the implementation} is that is must be a subset of the standard and follow the described architecture as close as possible. Any deviation from this requires a thorough analysis of the security implications or the implementation will lose its greatest benefit - the security properties brought by the thoroughly vetted IPsec standard.
-\end{quote}
+\end{quotation}
 
 Obviously, a thorough investigation and rework of the standards' internals would have the possibility of resulting in a more efficient implementation, but such an endeavor would require an effort that certainly would be outside the bounds of this work. 
 
@@ -410,14 +413,28 @@ Contiki targets\footnote{A compiler is said to be \emph{targetting} a certain CP
 % As the author only had a rudimentary knowledge (roughly comparable as that of system administrator) of IPsec / IKEv2, he decided to that the safest way.
 
 \section{IPsec}
+At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza12secure}). It had the ability to receive as well as transmit AH as well as ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used in a bidirectional manner. This did not scale and the natural idea was to go ahead and implement IKEv2 as well.
+
+The author decided from early on to implement a subset of RFC 4301 and associated documents. This was done in order to comply with the \emph{design principle} as outlined earlier, but mostly so because the databases are good at what they do: the implementation can use the SAD to store the SAs; the processing mechanism can use the SPD for policy management etc. There are good reasons as to why theses entities were invented, and leaving them for something else would make the other parts of the system (i.e. IKEv2) harder to implement as the developer would be forced to invent new solutions for doing without these systems. That would increase the work burden as well.
+
+\subsection{The processing mechanism}
+
 We implement IPsec by inserting hooks into the uIP-stack.
 
+
+\subsection{The databases: SAD; SPD and PAD}
 IPsec and IKE communicates through the databases SPD and SAD. The PAD doesn't need to be a database.
+
+
 
 The IPsec subsystem is implemented inside the uIP6 stack.
 
 [BIG image outlining what information is passed between the IP-stack, the IPsec processing subsystem, IKEv2 and the databases (SPD, SAD)]
 
+\section{AH}
+AH not needed. E-mail correspondance. Superflous due to ESP integrity.
+
+\section{ESP}
 
 \section{IKEv2}
 The IKEv2 service is implemented as a Contiki Process. Each session is modelled as a mealy state machine [img].
@@ -438,7 +455,7 @@ Per SA requirement
 \chapter{Improvements}
 
 
-\bibliography{refs,rfc}
+\bibliography{refs,simond,rfc}
 \bibliographystyle{plain}
 
 \end{document}
