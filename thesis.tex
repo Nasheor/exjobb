@@ -1,21 +1,38 @@
-\documentclass[final,a4,twoside,11pt,onecolumn]{report}
+\documentclass[final,a4paper,twoside,11pt,onecolumn]{report}
 % if you use "report", you get a seperate title page
 %\documentclass[final,letterpaper,twoside,12pt]{article}
 %
 
 \usepackage[utf8]{inputenc} 
-%\usepackage[swedish]{babel}
+%\usepackage[swedish]{babel}prettyref
 \usepackage{fancyhdr}
 \usepackage{graphicx}
 \usepackage{empheq}
 \usepackage{natbib}
 \usepackage{url}
+\usepackage{nameref}
+%\usepackage{showkeys}
+\usepackage{prettyref}
+\usepackage{varioref}
+%\usepackage{cleveref}
+\usepackage{hyperref} % To be loaded AFTER cleveref
+%\usepackage[margin]{fancyref}
 
 \DeclareGraphicsExtensions{.pdf,.png,.jpg,.jpeg}
 \graphicspath{ {bilder/} }
 
+% For prettyref
+\newrefformat{eq}{\textup{(\nameref{#1})}}
+\newrefformat{lem}{lemma \nameref{#1}}
+\newrefformat{thm}{theorem \nameref{#1}}
+\newrefformat{cha}{chapter \nameref{#1}}
+\newrefformat{sec}{section \nameref{#1}}
+\newrefformat{tab}{table \nameref{#1} on page \pageref{#1}}
+\newrefformat{fig}{figure \nameref{#1} on page \pageref{#1}}
 
-
+% For suppressing the chapter label. Not working atm.
+%\renewcommand{\chaptername}{}
+%\renewcommand{\thechapter}{}
 
 \begin{document}
 \author{Vilhelm~Jutvik \thanks{To everyone at SICS and the NES group}}
@@ -50,6 +67,7 @@ nödvändig bakgrundsinformation för en allmänbildad läsare som inte nödvän
 hot and cold mediums
 
 \chapter{Introduction}
+\label{cha:intro}
 The Internet has revolutionized communication. The author would like to argue that this happened because it drastically lowered the cost of communication by removing interface barriers, unifying standards and organizations. Internet is cheap while legacy, purpose-made, communication networks are expensive (e.g. consider the PSTN\footnote{Public Switched Telephone Network, your ordinary phone}). These lowered costs allowed people to send and receive information at an enormous rate, creating new types of medias and services such as the blog, the social network, the search engine etc. Because of these benefits, we try to expand the Internet, and now strides are being made to connect the objects that we surround ourselves with, creating what's commonly called he `Internet of Things' (abbreviated as IoT). It's a vision of an extended Internet where household objects (radiators, lighting etc), sensors and actuators in industrial machinery, cars etc are put `online'. Data is primarily sent and received by radio as cables are expensive to install and maintain.
 
 The underlying motivation as to why we want to communicate with things are that they and their surroundings matters to humans. A thing such as freezer can notify building management when its about to break down and notify building management before the food is spoiled. Data from the vibration sensor in the bridge helps the engineer to model its health and plan maintenance. A thing can also help another thing, e.g. the temperature sensor telling the radiator to turn as the temperature is falling.
@@ -134,33 +152,45 @@ A final possibility would be to come to a conclusion by using analysis. Supposin
 This report makes three scientific contributions. The first is the demonstration of that it's feasible to implement IPsec with dynamic key management and IKEv2 in the Contiki OS. The second is that it's possible to simplify the IPsec protocol in IPv6-IoT environments without sacrificing much in interoperability. The final is that IPsec's network-centric policy language is ill suited for ad-hoc, self-organized network environments, such as that created by the RPL\footnote{The Routing Protocol for Low-Power and Lossy Networks (RPL) is an IETF standard (RFC 6553) that creates dynamic routing topologies} routing protocol commonly used in conjunction with IoT.
 
 \section{Report Structure}
-The purpose of the chapter \emph{Introduction} chapter is to give the reader an overview of the report. The next chapter, \emph{Background}, will begin by a discussion of the problems that are particular to the field of IoT and how Contiki is constructed. This will be followed by a brief recount of the background and design of IPsec and 802.11.4's security features. In \emph{Design and Implementation} the author outlines how the IPsec standard is adapted to IoT and Contiki. Simplifications and omissions of features are explained and argued for. The design is then evaluated in \emph{Evaluation} by measuring parameters such as time, energy and memory usage when sending and receiving data. Space will also be given to observations of a qualitative nature, such as how well the standard integrates with the Contiki OS. The author's opinions of the evaluation and suggestions for future work is given in \emph{Conclusion}.
+The purpose of the \prettyref{cha:intro} is to give the reader an overview of the report. The next chapter, \nameref{cha:bg}, will begin by a discussion of the problems that are particular to the field of IoT and how Contiki is constructed. This will be followed by a brief recount of the background and design of IPsec, followed by an introduction to automatic keying and the IKEv2 protocol. In \prettyref{cha:doi} the author outlines how the IPsec standard is adapted to IoT and Contiki. Simplifications and omissions of features are explained and argued for. The design is then evaluated in \nameref{cha:eval} by measuring parameters such as time, energy and memory usage when sending and receiving data. Space will also be given to observations of a qualitative nature, such as how well the standard integrates with the Contiki OS. The author's opinions of the evaluation and suggestions for future work is given in \nameref{cha:fw}.
 
-
-Background
-Implementation
-Evaluation
-Discussion
-Conclusions and Future Work
 
 \chapter{Background}
-The purpose of this chapter is to introduce the reader to the Contiki OS and the IPsec standard. A good understanding of these systems are necessary to understand the later chapter `Design and Implementation'.
+\label{cha:bg}
+The purpose of this chapter is to introduce the reader to the Contiki OS and the IPsec standard. A good understanding of these systems are necessary to understand the later \prettyref{cha:doi}.
 
 \section{Contiki}
-Contiki is an operating system designed for computers with severely constrained resources\cite{dunkels04contiki}. At the time of its original release in 2004 it was targeted at 8 bit micro controllers, ROM in the order of 100 kB and RAM less than 20 kB\citep[1]{dunkels04contiki}. Power was usually supplies 
-* Purpose made for constrained environments with little memory, cpu and energy; like sensor networks
+Contiki is an operating system designed for computers with severely constrained resources\cite{dunkels04contiki}. At the time of its original release in 2004 it was targeted at 8-bit micro controllers, ROM on the order of 100 kB and RAM less than 20 kB\citep[1]{dunkels04contiki}. Although the production costs of electronics certainly will continue to fall in future, this doesn't necessarily translate into a lesser interest in resource constrained operating systems such as Contiki - the lower prices can be used to produce more units instead of making existing devices more powerful. The choice of small devices such as the traditional 8- and 16-bit micro-controllers that has been the mainstay of Contiki since its inception\footnote{Examples of micro-controllers commonly used with Contiki are Texas Instrument's MSP430 architecture and Atmel's AVR 8-bit dito.}, is not just about cost, but also about power efficiency. Small chips have been, for various reasons, more energy efficient on a per cycle basis than heavier systems (e.g. the 32-bit  Cortex-M3 platform from the ARM Corporation). Having said that, this is set to change as the more powerful micro-controllers are becoming increasingly energy-efficient, a fact which we will address in the \prettyref{cha:fw}.
+
+Having stated this, Contiki's greatest benefit is not that it's very compact, it's that it provides `a rich enough execution environment while staying within the limitations of the constrained devices'\citep[Introduction]{dunkels04contiki}. The `rich execution environment' is a reference to Contiki's capability to dynamically load and unload software, its multithreading, mesh networking\cite{tsiftes10rpl} and more, that are all designed to fit within the constraints, memory- as well as energy-wise (i.e. limit the number of execution cycles and keep peripherals such as the radio asleep). We will now review the most important of these features that makes Contiki a popular OS for IoT-devices.
+
+\subsection{Multitasking}
+Multitasking (concurrency) is provided in Contiki by the \emph{Protothreads} mechanism\cite{dunkels2005protothreads}. Before explaining its inner workings, the author will provide the reader with a short review of the problems associated with multitasking in resource constrained systems.
+
+The motivation underlying protothreads is to provide the programmer with multitasking that is easy to use, easy to understand and low in resource consumption. Multitasking has traditionally been implemented in virtually all operating systems by the means of \emph{processes}. In such a model, each \emph{process} is associated with an executable, has its own private stack and memory, set of registers (etc) and can be interrupted (more specifically, \emph{preempted}), at any time by the operating system's \emph{scheduler} in order to run a kernel specific task or to \emph{schedule} another task. In all cases where a process is preempted, a \emph{context switch} has to take place where much of the CPU's registers are changed, caches flushed etc. This is unsuitable for constrained environments due to the massive memory overhead of a process structure, private stacks and the energy required for doing a context switch.
+
+One approach to overcome these drawbacks while still allowing some form of multitasking was employed by another sensor network OS: TinyOS\cite{levis2005tinyos}. TinyOS allowed the programmer to achieve multitasking by implementing their programs as event driven state machines. The machines has no stack and can only keep state (i.e. data) that are implicitly declared as such. As the C programming language doesn't have any event primitives, an extension to C was developed and named \emph{nesC}\cite{gay2003nesc}.
+
+Contiki took a different route and provided the programmer with a model that resembled the sequential programming style (which is believed to be more comfortable for the majority of developers)\footnote{The author found this reasoning to have merit after having participated in a course where application programming for TinyOS as well as Contiki was taught, having observed that the vast majority of his classmates preferred Contiki's Protothreads to TinyOS' nesC.}, but still benefitted from the efficiency of the event driven state machine.
+
+\begin{figure}[h!]
+   \includegraphics[width=0.9\textwidth]{dunkels-protothreads-example}
+   \caption{Example code for a radio transmission program utilizing Protothreads. From \citep[p.7]{dunkels2005protothreads}. FIX: Check copyright!}
+   \label{fig:ptexample}
+\end{figure}
+
+In figure \vref{fig:ptexample} a code example using Protothreads is shown, in which a radio is awaken at a set schedule to wait for check for transmissions. Protothreads uses a concept called \emph{conditional blocking} which can be explained in the following way: the execution can't leave the thread until a conditional blocking statement is reached (macros prefixed with `PT'). This can also be referred to as \emph{cooperative multitasking} as control can only leave a program when it voluntarily relinquish it.
+
+As all Protothreads share the same stack and Contiki only needs to remember at which conditional to resume the thread, memory requirements can be as small as 2 bytes of RAM per thread. Furthermore, curiously enough, the `context-switching' mechanism can be wholly implemented using only the C switch control structure. This `quirk' of the C language was probably first discovered by Tom Duff\citep[p.10]{dunkels2005protothreads}\cite{wiki:duffs}.
+
+%Programs written for an event-driven model typically have to be implemented as ex- plicit state machines. In contrast, with protothreads programs can be written in a se- quential fashion without having to design explicit state machines. To illustrate this, we return to the radio sleep cycle example from the previous section.
 
 \paragraph{Hardware support}
 From 8-bit to 32-bit Cortex M3. Requires bla bla ROM and RAM.
 Radios
 
-\paragraph{The application environment} is constructed with efficiency in mind.
-* Event driven
-* Single stack
-* Protothreads
 
-
-\paragraph{IP networking} is provided by the uIP stack.
+\subsection{IP networking} is provided by the uIP stack.
 
 
 \section{Internet Security}
@@ -178,7 +208,7 @@ Radios
 
 \paragraph{A central concept} of the IPsec model is the data structure named the \emph{Security Association} (SA). A Security Association defines a single simplex IP link and the security services it provides to the traffic that it carries. The services can be implemented by one of the two IPsec protocols: \emph{Authentication Header} (AH) and \emph{Encapsulating Security Payload} ESP. Bi-directional (duplex) traffic is enabled by creating a pair of SAs, one for each direction. As the author will show, the SA is used by almost all IPsec components and we will return to it from time to time.
 
-\paragraph{The policies and cryptographic secrets} used in IPsec processing are stored in three databases: the Security Association Database (\emph{SAD}); the Security Policy Database (\emph{SPD}) and its caches; the Peer Authorization Database (\emph{PAD}). The standard stresses the fact that the implementation of these databases should not be viewed as pre-requisites for a compliant IPsec implementation, but that such a system should exhibit the very same behavior as that of a system whose architecture was implemented in line with the standard's model. In the following paragraphs these databases will be used as constructs to explain the inner workings of IPsec, although, as the reader will learn in the chapter Implementation\ref{chap:Implementation}, the author has actually used these constructs in the final implementation as well. Finally, the system will be explained only in brief as the IPsec suite is simply too large for a thorough review in this thesis. The interested reader is advised to read the complete standard document\citep{rfc4301} starting at section 4.4 for an in-depth definition of the SAD, SPD and PAD.
+\paragraph{The policies and cryptographic secrets} used in IPsec processing are stored in three databases: the Security Association Database (\emph{SAD}); the Security Policy Database (\emph{SPD}) and its caches; the Peer Authorization Database (\emph{PAD}). The standard stresses the fact that the implementation of these databases should not be viewed as pre-requisites for a compliant IPsec implementation, but that such a system should exhibit the very same behavior as that of a system whose architecture was implemented in line with the standard's model. In the following paragraphs these databases will be used as constructs to explain the inner workings of IPsec, although, as the reader will learn in the \prettyref{cha:doi}, the author has actually used these constructs in the final implementation as well. Finally, the system will be explained only in brief as the IPsec suite is simply too large for a thorough review in this thesis. The interested reader is advised to read the complete standard document\citep{rfc4301} starting at section 4.4 for an in-depth definition of the SAD, SPD and PAD.
 
 
 \paragraph{The SPD} stores the policies that controls IPsec processing. It consists of an ordered list, where each entry is composed of a set of \emph{selectors}, \emph{PFP flags} and a \emph{processing action}. 
@@ -191,10 +221,12 @@ The \emph{processing actions} are the very same as described in \ref{ipsec_proc}
 
 \paragraph{The SPD's caches} can be divided into three different sections: SPD-O outbound traffic that is not to be protected; SPD-S for outbound traffic that is to be protected; SPD-I for all incoming traffic. The entries contains the same fields as the SPD, with the exception of the PFP (`Populate From Packet', as described above) field which is not present. From a functional point of view, each entry is an \emph{instantiation} of an SPD entry. That implies that each entry's selector is a subset of one of the SPD's entry's selectors. The IPsec processing mechanism creates such entries in response to encountering traffic that uses one of the SPD's entries. This is made because of two reasons: 
 
-\begin{quotation}1) Lookups in the SPD can be slow on large systems with many SPD entries. The SPD cache is faster\footnote{As to the question of why the SPD's cache allows a faster lookup, the author has to direct the reader to RFC 4301. This speedup is hardly relevant to the thesis in question and thus the curious reader is encouraged to start reading at section 5, taking extra care to read the parts about de-correlation.}.
+\begin{quotation}
+1) Lookups in the SPD can be slow on large systems with many SPD entries. The SPD cache is faster\footnote{As to the question of why the SPD's cache allows a faster lookup, the author has to direct the reader to RFC 4301. This speedup is hardly relevant to the thesis in question and thus the curious reader is encouraged to start reading at section 5, taking extra care to read the parts about de-correlation.}.
 \end{quotation}
 
-\begin{quotation}2) a rule in the SPD can order traffic for a large address space to be protected. That address-space can contain many hosts, and each host can in turn demand different SAs for different traffic (e.g. different SAs for traffic over TCP and UDP). Thus, one realizes that each SA must explicitly define what traffic it carries. This is one of the purposes of the SPD-S cache. Each entry corresponds to an SA and its selector defines its traffic.
+\begin{quotation}
+2) a rule in the SPD can order traffic for a large address space to be protected. That address-space can contain many hosts, and each host can in turn demand different SAs for different traffic (e.g. different SAs for traffic over TCP and UDP). Thus, one realizes that each SA must explicitly define what traffic it carries. This is one of the purposes of the SPD-S cache. Each entry corresponds to an SA and its selector defines its traffic.
 \end{quotation}
 
 It's unfortunately hard to get a good overview of the SPD's caching system as the information is sprinkled over large parts of RFC 4301. The author recommends the curious reader to begin reading at section 5, `IP traffic processing'\citep[Section 5]{rfc4301}.
@@ -270,7 +302,7 @@ The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv
 \begin{figure}[h!]
    \includegraphics[width=0.9\textwidth]{wiki-ipv6-listofextensionheaders}
    \caption{This list covers a number of common extensions headers `next header'. List from \cite{wiki:ipv6_packet}.}
-   \label{fig:wiki-ipv6-nextheader}
+   \label{fig:wiki-ipv6-listofextensionheaders}
 \end{figure}
 
 
@@ -317,7 +349,7 @@ The parameters of the process (such as key, key length and type of MAC algorithm
 
 The ESP (Encapsulating Security Payload) protocol described in RFC 4303\cite{rfc4303}, provides \emph{confidentiality} and limited \emph{traffic flow confidentiality} in addition to AH's \emph{data integrity} and \emph{data authentication}. The term \emph{Encapsulating} is derived from the fact that the protocol is designed to encase everything that follows it in the packet (extension headers as well as payload). This practice is of benefit in itself, but rather it facilitates the implementation of confidentiality protection. For example, there are many popular algorithms which belongs to the block cipher family e.g. AES-CBC. Such algorithms only operates upon fixed sizes of data and therefore needs to pad\footnote{To `pad' data is to prepend or append white space characters (in the case of text documents) or null bytes to a string in order to increase it to a predetermined length.} the IP packet's payload to a multiple of the block length.
 
-The fact that confidentiality protection is optional makes ESP services identical to that of AH's, but only under certain circumstances. In `Design and Implementation' it will be shown how this fact can be exploited.
+The fact that confidentiality protection is optional makes ESP services identical to that of AH's, but only under certain circumstances. In \prettyref{cha:doi} it will be shown how this fact can be exploited.
 
 
 % \cite{wiki:ipv6_packet}
@@ -389,7 +421,8 @@ After the handshake is complete (i.e. the creation of the SA for the IPsec traff
 
 
 
-\chapter{Design and Implementation} 
+\chapter{Design and Implementation}
+\label{cha:doi}
 Implementing Internet standards in Contiki is often a challenging task. Internet standards are written with the presumption of hosts with vastly more capable hardware on the host's part. This requires the engineer to simplify parts of the standard, make generalizations, and omit parts altogether. This might be difficult as it requires good knowledge of the standard in question as well as the behavior of other implementations. The synthesis of this knowledge allows her to save hardware resources by making shortcuts in her implementation, shortcuts which might very well violate the standard document, but still exhibit a behavior which allows communication with the rest of the Internet. This a good example of the very practical, experimental, approach that is typical of Contiki's development culture.
 
 \section{Development process}
@@ -417,9 +450,9 @@ At the project's inception, there was already a rudimentary implementation of IP
 
 The author decided from early on to implement a subset of RFC 4301 and associated documents. This was done in order to comply with the \emph{design principle} as outlined earlier, but mostly so because the databases are good at what they do: the implementation can use the SAD to store the SAs; the processing mechanism can use the SPD for policy management etc. There are good reasons as to why theses entities were invented, and leaving them for something else would make the other parts of the system (i.e. IKEv2) harder to implement as the developer would be forced to invent new solutions for doing without these systems. That would increase the work burden as well.
 
-\subsection{The processing mechanism}
+\subsection{The IP processing mechanism}
 
-We implement IPsec by inserting hooks into the uIP-stack.
+We implement IPsec by inserting hooks into  the uIP-stack.
 
 
 \subsection{The databases: SAD; SPD and PAD}
@@ -443,6 +476,7 @@ The machine is built to be extended. The following is implemented as of now:
 
 
 \chapter{Evaluation}
+\label{cha:eval}
 
 \section{Memory requirements}
 Maximum stack and heap requirements
@@ -452,7 +486,9 @@ Per SA requirement
 * IKE handshake: Energy and time. Total setup time.
 * IPsec packet: Energy required for receiving, energy required for transmitting. Roundtrip times.
 
-\chapter{Improvements}
+
+\chapter{Future Work and Recommendations}
+\label{cha:fw}
 
 
 \bibliography{refs,simond,rfc}
@@ -546,7 +582,8 @@ Processing and memory requirements
 \section{Design evaluation}
 Implications of design choices
 
-\section{Recommendation}
+\chapter{Recommendations and Future work}
+\label{cha:fw}
 cite:Problem Areas for the IP Security Protocols
 
 
