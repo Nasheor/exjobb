@@ -2,7 +2,7 @@
 % if you use "report", you get a seperate title page
 %\documentclass[final,letterpaper,twoside,12pt]{article}
 %
-% Längd-infor: N Tsiftes rapport är 35 sidor lång (exkl. bibliografi och appendix) och är typsatt i 11 punkter
+% Längd-infor: N Tsiftes rapports nyttotext är 30 sidor lång (exkl. bibliografi och appendix) och är typsatt i 11 punkter
 
 \usepackage[utf8]{inputenc} 
 %\usepackage[swedish]{babel}prettyref
@@ -464,41 +464,59 @@ Obviously, a thorough investigation and rework of the standards' internals would
 
 Simultaneously, the author worked with Contiki's source code and documentation in order to figure out how to integrate IKEv2 and the IPsec system into Contiki, a feat easier said than done as Contiki is quite different from the typical multi-user multi-tasking operating system. Implementation then proceeded in a top-down fashion where the data structures were written first, APIs secondly and then finally the actual algorithms.
 
-Contiki targets\footnote{A compiler is said to be \emph{targetting} a certain CPU's instruction set in the sense that it is configured to produce compatible binaries.} many different platforms, and two of them is Windows and Linux, i.e. the platform that the compiler is running on. This is called the \emph{native} target and is particular in the sense that Contiki (which is running as an ordinary process in the host's operating system) has access to the wast resources of the personal computer. Needless to say, this greatly facilitates debugging and was therefore used as the predominant build target during the development process. Peripherals such as sensors are emulated and network communication is achieved using a faked serial interface over a tunnel FIX:Look this up. 
+Contiki targets\footnote{A compiler is said to be \emph{targeting} a certain CPU's instruction set in the sense that it is configured to produce compatible binaries.} many different platforms, and two of them is Windows and Linux, i.e. the platform that the compiler is running on. This is called the \emph{native} target and is particular in the sense that Contiki (which is running as an ordinary process in the host's operating system) has access to the wast resources of the personal computer. Needless to say, this greatly facilitates debugging and was therefore used as the predominant build target during the development process. Peripherals such as sensors are emulated and network communication is achieved using a faked serial interface over a tunnel FIX:Look this up. 
 
 \paragraph{During final development} the target was changed from \emph{native} to \emph{msp430} (a CPU commonly used in IoT platforms due to its energy efficiency) as the focus turned from functionality to memory and speed improvements. Benchmarking and tuning has to be performed on the correct platform as libraries, the platform's instruction set, and compiler optimization possibilities are target specific. Instead of using actual hardware\footnote{Using real hardware for testing purposes turned out to be a large problem as no readily available platform had the required memory capacity to store the binaries.} Contiki was executed on emulated hardware using Contiki's popular simulation environment - Cooja\cite{osterlind06crosslevel}. Apart from providing emulation, Cooja features a complete experimental sandbox which will be further described in the chapter Evaluation.
 
+% STRUCTURE
+% 1. Requirements (what part of the RFCs to embrace)
+% 2. Implementation
 
 % As the author only had a rudimentary knowledge (roughly comparable as that of system administrator) of IPsec / IKEv2, he decided to that the safest way.
 
 \section{IPsec}
-At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza12secure}). It had the ability to receive as well as transmit AH as well as ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used in a bidirectional manner. This did not scale and the natural idea was to go ahead and implement IKEv2 as well.
+At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza12secure}). It had the ability to receive as well as transmit AH and ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used for duplex traffic. This implementation served as a proof-of-concept of the basics of IPsec on Contiki, as well as an IPsec header compression scheme in the underlying MAC-layer. Having stated this, the lack of support for multiple SAs and the inability to negotiate new ones made it difficult to fit into a real world network environment where communication patterns are subject to constant change.
 
-The author decided from early on to implement a subset of RFC 4301 and associated documents. This was done in order to comply with the \emph{design principle} as outlined earlier, but mostly so because the databases are good at what they do: the implementation can use the SAD to store the SAs; the processing mechanism can use the SPD for policy management etc. There are good reasons as to why theses entities were invented, and leaving them for something else would make the other parts of the system (i.e. IKEv2) harder to implement as the developer would be forced to invent new solutions for doing without these systems. That would increase the work burden as well.
-
-\subsection{The IP processing mechanism}
-
-We implement IPsec by inserting hooks into  the uIP-stack.
+In this section, the author will begin by describing the IPsec implementation's design specification, its rationale, and most importantly its RFC-compliance. It will then continue with a review of how the technical problems have been solved.
 
 
-\subsection{The databases: SAD; SPD and PAD}
-IPsec and IKE communicates through the databases SPD and SAD. The PAD doesn't need to be a database.
+\subsection{Requirements}
+The author decided from early on to implement a subset of IPsec RFC 4301 and associated documents. This was done in order to comply with the \emph{design principle} as outlined earlier, but mostly so because the databases are good at what they do: the implementation can use the SAD to store the SAs; the processing mechanism can use the SPD for policy management etc. There are good reasons as to why theses entities were invented, and leaving them for something else would make the other parts of the system (i.e. IKEv2) harder to implement as the developer would be forced to invent new solutions for doing without these systems. That would increase the work burden.
+
+AH not required (explain! get stuff from e-mails). ESP is. Must be able to handle headers in any place. Must support popular encryption types.
+
+Note: Get doxygen up and running for code graphs and whatnot
+
+\subsection{Implementation}
+
+1. Overview of uIP stack code structure. Doxygen code graphs are probably not available. Make something on your own instead. Show where we insert our hooks.
+2. Describe in order to appearance starting with incoming traffic: ESP decoding, databases. Outoing: policy checking with databases, encoding
+
+%\subsection{The databases: SAD; SPD and PAD}
+%IPsec and IKE communicates through the databases SPD and SAD. The PAD doesn't need to be a database.
 
 
 
-The IPsec subsystem is implemented inside the uIP6 stack.
 
-[BIG image outlining what information is passed between the IP-stack, the IPsec processing subsystem, IKEv2 and the databases (SPD, SAD)]
+%[BIG image outlining what information is passed between the IP-stack, the IPsec processing subsystem, IKEv2 and the databases (SPD, SAD)]
 
-\section{AH}
-AH not needed. E-mail correspondance. Superflous due to ESP integrity.
+%\section{AH}
+%AH not needed. E-mail correspondance. Superflous due to ESP integrity.
 
-\section{ESP}
+%\section{ESP}
 
 \section{IKEv2}
 The IKEv2 service is implemented as a Contiki Process. Each session is modelled as a mealy state machine [img].
 
 The machine is built to be extended. The following is implemented as of now:
+
+\subsection{Requirements}
+Shared key auth. No X509. Simplified TS.
+
+Easily extendable to allow for missing features and other keying schemes for other applications.
+
+\subsection{Implementation}
+Mealy machines and whatnot
 
 
 \chapter{Evaluation}
@@ -512,8 +530,11 @@ Per SA requirement
 * IKE handshake: Energy and time. Total setup time.
 * IPsec packet: Energy required for receiving, energy required for transmitting. Roundtrip times.
 
+\chapter{Discussion}
+RPL and IPsec. Can't form a sensible policy when it doesn't know what network it's on.
 
 \chapter{Future Work and Recommendations}
+
 \label{cha:fw}
 
 
