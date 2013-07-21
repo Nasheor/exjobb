@@ -2,6 +2,7 @@
 % if you use "report", you get a seperate title page
 %\documentclass[final,letterpaper,twoside,12pt]{article}
 %
+% Längd-infor: N Tsiftes rapport är 35 sidor lång (exkl. bibliografi och appendix) och är typsatt i 11 punkter
 
 \usepackage[utf8]{inputenc} 
 %\usepackage[swedish]{babel}prettyref
@@ -29,6 +30,9 @@
 \newrefformat{sec}{section \nameref{#1}}
 \newrefformat{tab}{table \nameref{#1} on page \pageref{#1}}
 \newrefformat{fig}{figure \nameref{#1} on page \pageref{#1}}
+
+\def\Figref Figure:#1:{\figref{fig:#1}}
+\newrefformat{Fig}{Figure~\Figref#1:}
 
 % For suppressing the chapter label. Not working atm.
 %\renewcommand{\chaptername}{}
@@ -128,7 +132,7 @@ Can IPsec and IKEv2 be implemented within the current hardware boundaries while 
 Much of the research in IoT is carried out by experiments because of the highly applied nature of the field. Indeed, most of the Internet as-of-today, was constructed on the basis of principles surmised from experiments. Therefore, the author decided to  implement the various components that makes up a functional IPsec system and then test them. The tests were carried out by subjecting the system to common communication scenarios with other IPsec-enabled Internet hosts: handshaking a new secure connection; receiving and transmitting packets with various security policies applied; housekeeping of connections. The success or failure of the test is determined if it worked, or if it succeeded, how well it did so. Finally, memory consumption and cpu time is measured for the different tasks. It's the results of these tests that will form the basis of the evaluation of the 1) quality and workmanship of the implementation 2) suitability of IPsec for IoT in general.
 
 \subsection{Development process}
-The source code was managed using the Git source code revision system. Development was organized in such a way that the project was run in one branch\footnote{Git branches are similar in concept to those in other SCMS. ...} (hereafter called \emph{develop}) parallell to Contiki's master branch. Important patches / changes that occurred in Contiki while the development was underway could thus simply be fetched / merged into \emph{develop}. Patches in develop that proved  was then merged in from the 
+The source code was managed using the Git source code revision system. Development was organized in such a way that the project was run in one branch\footnote{Git branches are similar in concept to those in other SCMS. ...} (hereafter called \emph{develop}) parallel to Contiki's master branch. Important patches / changes that occurred in Contiki while the development was underway could thus simply be fetched / merged into \emph{develop}. Patches in develop that proved  was then merged in from the 
 
 \section{Limitations}
 Firstly, the purpose of this work is to answer the questions raised in the problem statement, not to create an implementation that's ready for production use. Thus, parts of the standard that are not necessary to meet this end can be omitted. This also includes parts that are labeled as REQUIRED in the standard documents, as they're only necessary if you strive towards full compliance, which in terms of features arguably is superset of that of interoperability.
@@ -185,13 +189,34 @@ As all Protothreads share the same stack and Contiki only needs to remember at w
 
 %Programs written for an event-driven model typically have to be implemented as ex- plicit state machines. In contrast, with protothreads programs can be written in a se- quential fashion without having to design explicit state machines. To illustrate this, we return to the radio sleep cycle example from the previous section.
 
-\paragraph{Hardware support}
-From 8-bit to 32-bit Cortex M3. Requires bla bla ROM and RAM.
-Radios
+%\paragraph{Hardware support}
+%From 8-bit to 32-bit Cortex M3. Requires bla bla ROM and RAM.
+
+%Support for many 802.11.4 devices.
 
 
-\subsection{IP networking} is provided by the uIP stack.
+\subsection{IP networking}
+UDP, TCP as well as ICMP over IPv4 and IPv6 are provided by the $\mu$IP stack, described in\cite{dunkels2003full}. The system is surprisingly robust given that its footprint amounts to only ~10 kB of ROM and a couple of hundred bytes of RAM: it fulfills all necessary host-to-host requirements stipulated in the relevant RFC documents\citep[p.4]{dunkels2003full} (e.g. flow and congestion control). The number of TCP connections and the size of the transmission / reception buffers are only limited by available RAM.
 
+\begin{figure}
+   \centering
+   \begin{minipage}{.5\textwidth}
+      \centering
+      \includegraphics[width=.9\linewidth]{dunkels-uip-main_loop}
+      \caption{$\mu$IP's main control loop. From \citep[p.6]{dunkels2003full}. FIX: Check copyright!}
+      \label{fig:uip-ml}
+   \end{minipage}%
+   \begin{minipage}{.5\textwidth}
+      \centering
+      \includegraphics[width=.9\linewidth]{dunkels-uip-and-lwip}
+      \caption{Features of $\mu$IP and the now no longer maintained lwIP. Since the table was published in \citep[p.4]{dunkels2003full} UDP has been added as well to $\mu$IP.}
+      \label{fig:uip-features}
+   \end{minipage}
+\end{figure}
+
+One important reason as to why $\mu$IP can achieve such a low memory footprint is that is liberates the OS from the complicated transmission of data between application and IP stack. Most of the requirements associated with this interface, as described in the RFC, are waived in \citep[p.4]{dunkels2003full}. This not only removes the need for a lot of software logic, but also allows a drastic simplification of transmission buffer management, something which its designer have used to the fullest extent: there is only enough buffer space for one packet at any time, including the need of transmissions as well as receptions. Figure \ref{fig:uip-ml} describes the main loop of $\mu$IP which explains its buffer management. The application that wish to transmit data copies it into $\mu$IP's buffer and then calls the transmission function with the appropriate addressing information. Upon reception, the procedure is the opposite. The stack figures out which application is interested in the arrived piece of data, then calls its handler, which in turn is programmed to react on the data and to produce a reply, which in turn is written to the very same buffer and so on.
+
+Even though an IP packet can be well over a kilobyte in size (the MTU\footnote{Maximum Transmission Unit: The largest size of a packet that a network or a host can handle.} of IPv6 is 1280 bytes), the buffer can still be much smaller than this if used in conjunction with a MAC\footnote{Medium ACcess} layer that has a small MTU (6lowPAN (using IEEE 802.15.4 in turn) is very popular for Contiki and has a MAC MTU of at most 102 bytes\citep[section 4]{rfc4944}). This will allow the incoming IP-packet fragments to be spoon-fed to the receiving application, negating the need for a large buffer for transmission purposes. Buffer size then becomes a problem of how large IP-packets one wants the applications to transmit.
 
 \section{Internet Security}
 \paragraph{Security on the Internet} was, and is, as of today an unresolved issue in the author's opinion. As its protocol, IP, was originally designed and developed in the open world of academic computer science, no security considerations were made. Instead, the three properties of information security (confidentiality, authenticity, integrity) \citep[section 8.1]{vasseur10interconnecting} were provided by physically protecting the network hardware and the imposition of social norms among its users and operators. As the Internet grew, this and other weaknesses started to become problems. In 1995, the IETF\footnote{The Internet Engineering Task Force is the governing body of the development of Internet standards.} released a number of documents starting with RFC\footnote{RFC, or Request For Comment, is the collective name of the IETF's standards} 1883\cite{rfc1883} that defined IPv6, the planned successor of IPv4. IPsec was developed in conjunction with IPv6 and was until the advent of RFC 6434\cite{rfc6434} in late 2011 a mandatory part of a compliant IPv6 host. However, adaption of IPv6 has been slow despite growing technical problems with the still incumbent IPv4. The resistance to upgrade is widely attributed to the fact that the cost and risk (software adaption, operator training, equipment replacement etc) of making the change in most networks outweighs the potential benefits. This equation will certainly change, if slowly, in the coming years. In the meantime, IPv6 has found to be a great boon to new networks like Internet-connected smart phones, Internet-enabled set top TV-boxes and, naturally, the Internet of Things. In these cases it can be argued that the cost of adopting the legacy IPv4 is roughly the same as that of adopting IPv6, while enjoying benefits of the later's simplicity, auto configuration features and more\footnote{See chapter 15.1 in \cite{vasseur10interconnecting} for a brief discussion about the benefits of IPv6 over IPv4 in the context of IoT.}.
@@ -203,6 +228,7 @@ Radios
    \caption{IPsec processing of IP-packets. From \citep[p.8]{rfc4301}.}
    \label{fig:ipsec-flow}
 \end{figure}
+
 \label{ipsec_proc}
 \paragraph{In the IPsec processing model} IP-packets are said to be passed between from \emph{protected} to \emph{unprotected} interfaces and vice versa. In the usual case, such as above, there are only one of each. The unprotected interface is always the interface connected to the insecure network, while the protected may be either connected to a secure network (the \emph{security gateway} configuration) or be attached to an operating system's IP stack (FIX: Is the last statement ok?). The flow of packets between the protected and unprotected interfaces are determined by policies set by the system administrator which are expressed in terms of network- and transport-layer primitives, i.e. IP addresses, port numbers and transport-layer protocols. The policy can cause a packet to be: thrown away (\emph{DISCARD}); forwarded over the IPsec boundary without any action taken (\emph{BYPASS}; removing or applying cryptographic protection of the packet (\emph{PROTECT}). The later is performed in the module named \emph{AH/ESP} in the fig. no. \ref{fig:ipsec-flow} which we will discuss in length further on (FIX: NO ref to place of disc.?).
 
