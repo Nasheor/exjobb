@@ -232,6 +232,10 @@ Even though an IP packet can be well over a kilobyte in size (the MTU\footnote{M
 \label{ipsec_proc}
 \paragraph{In the IPsec processing model} IP-packets are said to be passed between from \emph{protected} to \emph{unprotected} interfaces and vice versa. In the usual case, such as above, there are only one of each. The unprotected interface is always the interface connected to the insecure network, while the protected may be either connected to a secure network (the \emph{security gateway} configuration) or be attached to an operating system's IP stack (FIX: Is the last statement ok?). The flow of packets between the protected and unprotected interfaces are determined by policies set by the system administrator which are expressed in terms of network- and transport-layer primitives, i.e. IP addresses, port numbers and transport-layer protocols. The policy can cause a packet to be: thrown away (\emph{DISCARD}); forwarded over the IPsec boundary without any action taken (\emph{BYPASS}; removing or applying cryptographic protection of the packet (\emph{PROTECT}). The later is performed in the module named \emph{AH/ESP} in the fig. no. \ref{fig:ipsec-flow} which we will discuss in length further on (FIX: NO ref to place of disc.?).
 
+\paragraph{IPsec affords protection for the traffic passed between networks as well as that between individual hosts.} In the former case, two IP networks are linked to each other by an IP-tunnel\footnote{An IP-tunnel allows communication between two IP-networks that don't have a routing path between each other. As the packets are transported by means of encapsulation (one IP-packets is transported in the payload field of another), other protocols can be `tunneled'  as well.} with an IPsec host at either end, acting as \emph{Security Gateways}. Packets that are routed to the other host's network are encapsulated in a security container (so called AH and ESP headers, which we will explain in \prettyref{sec:bgah} and \prettyref{sec:bgesp}) and dispatched to the Security Gateway at the other end of the tunnel. This allows secure communication between two networks and is useful when their hosts are not configured for IPsec. This mode of operation is referred to as \emph{tunnel mode} in the standards documents.
+
+Although tunnel mode is by far the most popular usage of IPsec, this thesis will not implement it as it becomes less relevant in an IoT environment, for a variety of reasons described in \prettyref{cha:doi}. Instead, the research will focus on the so called host mode where no encapsulation takes place.
+
 \paragraph{A central concept} of the IPsec model is the data structure named the \emph{Security Association} (SA). A Security Association defines a single simplex IP link and the security services it provides to the traffic that it carries. The services can be implemented by one of the two IPsec protocols: \emph{Authentication Header} (AH) and \emph{Encapsulating Security Payload} ESP. Bi-directional (duplex) traffic is enabled by creating a pair of SAs, one for each direction. As the author will show, the SA is used by almost all IPsec components and we will return to it from time to time.
 
 \paragraph{The policies and cryptographic secrets} used in IPsec processing are stored in three databases: the Security Association Database (\emph{SAD}); the Security Policy Database (\emph{SPD}) and its caches; the Peer Authorization Database (\emph{PAD}). The standard stresses the fact that the implementation of these databases should not be viewed as pre-requisites for a compliant IPsec implementation, but that such a system should exhibit the very same behavior as that of a system whose architecture was implemented in line with the standard's model. In the following paragraphs these databases will be used as constructs to explain the inner workings of IPsec, although, as the reader will learn in the \prettyref{cha:doi}, the author has actually used these constructs in the final implementation as well. Finally, the system will be explained only in brief as the IPsec suite is simply too large for a thorough review in this thesis. The interested reader is advised to read the complete standard document\citep{rfc4301} starting at section 4.4 for an in-depth definition of the SAD, SPD and PAD.
@@ -333,6 +337,8 @@ The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv
 
 
 \section{The AH protocol in IPv6}
+\label{sec:bgah}
+
 \begin{figure}[h!]
    % \includegraphics[width=0.9\textwidth]{wiki-ipsec-ah}
    % \caption{The AH extension header. From \cite{wiki:ah_header}.}
@@ -344,7 +350,7 @@ The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv
 
 \end{figure}
 
-The AH protocol's header (\emph{Authentication Header}) protocol described in RFC 4302\cite{rfc4302} guarantees the \emph{data integrity} and the \emph{data authentication} (origin) of the IP packet which it is applied to. This is achieved by applying a \emph{Message Authentication Code} (MAC) to the packet's content and to the header's immutable fields using a key privy to the two parties.
+The AH protocol's header (\emph{Authentication Header}) described in RFC 4302\cite{rfc4302} guarantees the \emph{data integrity} and the \emph{data authentication} (origin) of the IP packet which it is applied to. This is achieved by applying a \emph{Message Authentication Code} (MAC) to the packet's content and to the header's immutable fields using a key privy to the two parties.
 
 \begin{figure}[h!]
    \includegraphics[width=0.9\textwidth, trim=0 205 0 210]{wiki-mac}
@@ -362,6 +368,7 @@ The parameters of the process (such as key, key length and type of MAC algorithm
 
 
 \section{The ESP protocol in IPv6}
+\label{sec:bgesp}
 
 \begin{figure}[h!]
    % \includegraphics[width=0.9\textwidth]{wiki-ipsec-ah}
@@ -451,10 +458,14 @@ After the handshake is complete (i.e. the creation of the SA for the IPsec traff
 \label{cha:doi}
 Implementing Internet standards in Contiki is often a challenging task. Internet standards are written with the presumption of hosts with vastly more capable hardware on the host's part. This requires the engineer to simplify parts of the standard, make generalizations, and omit parts altogether. This might be difficult as it requires good knowledge of the standard in question as well as the behavior of other implementations. The synthesis of this knowledge allows her to save hardware resources by making shortcuts in her implementation, shortcuts which might very well violate the standard document, but still exhibit a behavior which allows communication with the rest of the Internet. This a good example of the very practical, experimental, approach that is typical of Contiki's development culture.
 
+% How about illustrating the above with a quote from A's uIP-paper concerning RFC-compliance?
+
 \section{Development process}
 The original goal of this thesis was to develop a working IKEv2 implementation on top of of an existing IPsec implementation already developed for Contiki. Therefore the literature review started with the RFCs\footnote{Described in so the so called RFC (Request for Comments) publication managed by the IETF and the Internet Society} covering that standard, continuing with other documents as the author's understanding of the field grew. 
 
-The author found the body of standard documents to be large, complex and described many features. It was unclear what effects a removal or alteration of a behavior could have on the implementation. Therefore the following principle was decided upon:
+% Move RFC footnote to begin of thesis
+
+The author found the body of standard documents to be large, complex and describe many features. It was unclear what effects a removal or alteration of a behavior could have on the implementation. Therefore the following principle was decided upon:
 
 \begin{quotation}
 \emph{The guiding design principle of the implementation} is that is must be a subset of the standard and follow the described architecture as close as possible. Any deviation from this requires a thorough analysis of the security implications or the implementation will lose its greatest benefit - the security properties brought by the thoroughly vetted IPsec standard.
@@ -475,19 +486,29 @@ Contiki targets\footnote{A compiler is said to be \emph{targeting} a certain CPU
 % As the author only had a rudimentary knowledge (roughly comparable as that of system administrator) of IPsec / IKEv2, he decided to that the safest way.
 
 \section{IPsec}
-At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza12secure}). It had the ability to receive as well as transmit AH and ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used for duplex traffic. This implementation served as a proof-of-concept of the basics of IPsec on Contiki, as well as an IPsec header compression scheme in the underlying MAC-layer. Having stated this, the lack of support for multiple SAs and the inability to negotiate new ones made it difficult to fit into a real world network environment where communication patterns are subject to constant change.
+At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza12secure}). It had the ability to receive as well as transmit AH and ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used for duplex traffic. This implementation served as a proof-of-concept of the basics of IPsec on Contiki, as well as an IPsec header compression scheme in the underlying MAC-layer. Having stated this, the lack of support for multiple SAs and the inability to negotiate new ones made it difficult to fit it into a real world network environment where communication patterns are subject to constant change.
 
 In this section, the author will begin by describing the IPsec implementation's design specification, its rationale, and most importantly its RFC-compliance. It will then continue with a review of how the technical problems have been solved.
 
 
-\subsection{Requirements}
+\section{IPsec Requirements}
 The author decided from early on to implement a subset of IPsec RFC 4301 and associated documents. This was done in order to comply with the \emph{design principle} as outlined earlier, but mostly so because the databases are good at what they do: the implementation can use the SAD to store the SAs; the processing mechanism can use the SPD for policy management etc. There are good reasons as to why theses entities were invented, and leaving them for something else would make the other parts of the system (i.e. IKEv2) harder to implement as the developer would be forced to invent new solutions for doing without these systems. That would increase the work burden.
 
-AH not required (explain! get stuff from e-mails). ESP is. Must be able to handle headers in any place. Must support popular encryption types.
+\subsection{The AH and ESP protocol}
+The AH and ESP protocols are described in RFC 4302 and 4303, respectively. 
+Must support popular encryption types. % FORTSÄTT HÄR!
+
+
+\subsection{The AH protocol}
+AH not required (explain! get stuff from e-mails). ESP is. Must be able to handle headers in any place
+
+\subsection{Processing}
+Handle headers in any place. Uphold security qualities such as anti-reply.
+
 
 Note: Get doxygen up and running for code graphs and whatnot
 
-\subsection{Implementation}
+\section{IPsec Implementation}
 
 1. Overview of uIP stack code structure. Doxygen code graphs are probably not available. Make something on your own instead. Show where we insert our hooks.
 2. Describe in order to appearance starting with incoming traffic: ESP decoding, databases. Outoing: policy checking with databases, encoding
