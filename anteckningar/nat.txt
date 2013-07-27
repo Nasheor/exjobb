@@ -1,0 +1,16 @@
+NAT fungerar inte med ipsec tunnel-mode då TCP och UDP (endast IPv6) kör checksum
+
+transport fungerar inte med ipsec tunnel-mode då TCP och UDP (endast IPv6) kör checksum
+
+============
+Incompatibility between checksums and NAT.  TCP and UDP checksums
+      have a dependency on the IP source and destination addresses
+      through inclusion of the "pseudo-header" in the calculation.  As a
+      result, where checksums are calculated and checked upon receipt,
+      they will be invalidated by passage through a NAT or reverse NAT
+      device.
+=============
+ESP och NAT fungerar inte när TCP eller UDP (ipv6) används
+
+
+Vad vill jag veta?: Varför ska tunnelmode bort
