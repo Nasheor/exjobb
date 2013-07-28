@@ -14,3 +14,4 @@ ESP och NAT fungerar inte när TCP eller UDP (ipv6) används
 
 
 Vad vill jag veta?: Varför ska tunnelmode bort
+Tunnelmode är i så gott som alla fall en nödvändighet för NAT-traversal. Behövs inte i IPv6 där vi hoppas slippa NAT
