@@ -42,7 +42,7 @@
 \author{Vilhelm~Jutvik \thanks{To everyone at SICS and the NES group}}
 \date{\today}
 %\title{The adaption of the IKEv2 protocol for The Internet of Things MS Thesis project plan}
-\title{IPsec for the Contiki OS}
+\title{IPsec and IKEv2 for the Contiki OS}
 
 \maketitle
 
@@ -456,7 +456,7 @@ After the handshake is complete (i.e. the creation of the SA for the IPsec traff
 
 \chapter{Design and Implementation}
 \label{cha:doi}
-Implementing Internet standards in Contiki is often a challenging task. Internet standards are written with the presumption of hosts with vastly more capable hardware on the host's part. This requires the engineer to simplify parts of the standard, make generalizations, and omit parts altogether. This might be difficult as it requires good knowledge of the standard in question as well as the behavior of other implementations. The synthesis of this knowledge allows her to save hardware resources by making shortcuts in her implementation, shortcuts which might very well violate the standard document, but still exhibit a behavior which allows communication with the rest of the Internet. This a good example of the very practical, experimental, approach that is typical of Contiki's development culture.
+Implementing Internet standards in Contiki is often a challenging task. The standards are written with the presumption of hosts with vastly more capable hardware, which requires the engineer to simplify parts of the standard, make generalizations, and omit other parts altogether. This might be difficult as it requires good knowledge of the standard in question as well as the behavior of other implementations. The synthesis of this knowledge allows her to save hardware resources by making shortcuts in her implementation, shortcuts which might very well violate the standard document, but still exhibit a behavior which allows communication with the rest of the Internet. This a good example of the very practical, experimental, approach that is typical of Contiki's development culture.
 
 % How about illustrating the above with a quote from A's uIP-paper concerning RFC-compliance?
 
@@ -499,30 +499,25 @@ The author decided from early on to implement a subset of IPsec RFC 4301 and ass
 \paragraph{Tunnel-mode will not be implemented} as the author believes the need for such functionality will be small in IoT networks using IPv6. The reasoning behind this is twofold:
 
 % No. 1
-Firstly, the most common use cases of network-to-network connections are: The single host connecting to distant network and its resources (e.g. the telecommuter's VPN connection); the sub-organization's network's router providing a secure route to the main's network. The author believes that the former cases are the principal usage scenarios of today and can't see any good use of tunneling in IoT hosts. However, there are many situations where an entire IoT network (e.g. ventilation system control) would benefit from a secure tunnel between itself and a friendly organization's network (e.g. the ventilation system's operators). If other network paths than the secure tunnel is disabled, the resulting network topography forms a simple and effective security solution. Having stated this, the secure tunneling code doesn't need to reside in the IoT hosts, but is most conveniently implemented in the network's border router. Secure communication between hosts can still be achieved with IPsec transport mode.
+Firstly, the most common use cases of network-to-network connections are: The single host connecting to a distant network and its resources (e.g. the telecommuter's VPN connection); the branch office's network's router providing a secure route to the main office's network. The author believes that the former cases are the principal usage scenarios of today and can't see any good use of tunneling in IoT hosts. However, there are many situations where an entire IoT network (e.g. ventilation system control) would benefit from a secure tunnel between itself and a friendly organization's network (e.g. the ventilation system's operators). If other network paths than the secure tunnel is disabled, the resulting network topography forms a simple and effective security solution. Having stated this, the secure tunneling code doesn't need to reside in the IoT hosts, but is most conveniently implemented in the network's border router. Secure communication between hosts can still be achieved with IPsec transport mode.
 
 % No. 2
 Secondly, the author believes that a major reason as to the current preference of tunneling over transport mode is that the latter is incompatible with NAT if used in conjunction with TCP, which is almost always the case. Tunnel mode is presented as the solution in RFC 3715\cite[2.1.b)]{rfc3715}. However, since this implementation constrains itself to IPv6, this problem disappears as the need for NAT is projected to go away with the introduction of IPv6 networks\footnote{NAT is commonly used to deal with the lack of IPv4 address space by `hiding' several hosts behind one public IP. IPv6 is conjectured to resolve this bye virtue of its $2^{128}$ address space.}.
 
 \paragraph{ESP}
-ESP along with associated security transforms\footnote{`The replacement of the variables in an algebraic expression by their values in terms of another set of variables; a mapping of one space onto another or onto itself; a function that changes the position or direction of the axes of a coordinate system.'\cite{wiki:transforms}} are described in RFC 4303\cite{rfc4303} and RFC 4835\cite{rfc4835}, respectively. The author implemented basically all of the functionality labeled as \emph{MUST} in RFC 4303. This resulted in an implementation that basically covered all of the externally visible behavior as described in the RFC, with the exception of the omission of ESN (Extended Sequence Numbers) which were deemed unnecessary as a limit of $2^{32}$ packets for an SA are sufficient. All security features such as Sequence Number Verification\citep[3.4.3]{rfc4303} were implemented though in order to comply with section 5, Conformance Requirements\citep[section 5]{rfc4303}.
+ESP along with associated security transforms\footnote{`The replacement of the variables in an algebraic expression by their values in terms of another set of variables; a mapping of one space onto another or onto itself; a function that changes the position or direction of the axes of a coordinate system.'\cite{wiki:transforms}} are described in RFC 4303\cite{rfc4303} and RFC 4835\cite{rfc4835}\footnote{Labeled `Cryptographic Algorithm Implementation Requirements for Encapsulating Security Payload (ESP) and Authentication Header (AH)'}, respectively. The author implemented basically all of the functionality labeled as \emph{MUST} in RFC 4303. This resulted in an implementation that basically covered all of the externally visible behavior as described in the RFC, with the exception of the omission of ESN (Extended Sequence Numbers) which were deemed unnecessary as a limit of $2^{32}$ packets for an SA are sufficient. All security features such as Sequence Number Verification\citep[3.4.3]{rfc4303} were implemented though in order to comply with section 5, Conformance Requirements\citep[section 5]{rfc4303}.
 
-The document RFC 4835 is the IETF's recommendation as to what security transforms (integrity/authentication, encryption) an IPsec host should be able to handle. The absence of any particular transform is not a security problem per see, but it will lead to one if the hosts then reverts to a common, less secure, transform. In any case, the lack of commonality definitely hampers interoperability. The following algorithms were implemented: AES-XCBC-MAC-96\cite{rfc3566} (auth / integ); AES-CTR\cite{rfc3686} (encryption); AES-CBC with 128 bit key\cite{rfc3602} (encryption) (FIX: broken in unpack!); NULL\cite{rfc2410} (encryption). TripleDES-CBC\cite{rfc2451} and HMAC-SHA1-96\cite{rfc2404} are labeled as MUST in the standards document\cite{rfc4835}, but were left out as they (firstly) would be more expensive to implement memory-vise and (secondly) afforded equivalent or lesser security than the others.
+The document RFC 4835 is the IETF's recommendation as to what security transforms (integrity/authentication, encryption) an IPsec host should be able to handle. The absence of any particular transform is not a security problem per see, but it will lead to one if the hosts then reverts to a common, less secure, transform. In any case, the lack of commonality definitely hampers interoperability. The following algorithms were implemented: AES-XCBC-MAC-96\cite{rfc3566} (authentication / integrity); AES-CTR\cite{rfc3686} (encryption); AES-CBC with 128 bit key\cite{rfc3602} (encryption) (FIX: broken in unpack!); NULL\cite{rfc2410} (encryption). TripleDES-CBC\cite{rfc2451} and HMAC-SHA1-96\cite{rfc2404} are labeled as MUST in the standards document\cite{rfc4835}, but were left out as they (firstly) would be more expensive to implement memory-vise and (secondly) afforded equivalent or lesser security than that of the alternatives.
 
 The lack of certain transforms are, however, a small problem as the implementation easily can be extended thanks to the modularity of the IPsec SA system, which is duplicated in this implementation.
 
-%\paragraph{The AH protocol and associated extension header will not be implemented} as it is made redundant . 
+\paragraph{The AH protocol and its associated extension header will not be implemented} as it is made redundant by ESP if tunneling is not used. Here is why:
+% Förklara varför AH är verkningslöst: AH skyddar IPv4-headers, men adresser ska ändå kontrolleras vid mottagning. Om man vill skydda extension headers avsedda för slut-hosten kan dessa placeras inuti ESP-delen. Referera till mail.
+% Beskrivs i RFC 4302
+% FORTSÄTT HÄR!
 
 
 
-\subsection{The AH and ESP protocol} % Ska vi verkligen ha den här rubriken här?
-The AH and ESP protocols are described in RFC 4302 and 4303, respectively.
-Must support popular encryption types.
-
-% Explain why tunnel mode is not implemented
-
-\subsection{The AH protocol}
-AH not required (explain! get stuff from e-mails). ESP is. Must be able to handle headers in any place
 
 \subsection{Processing}
 Handle headers in any place. Uphold security qualities such as anti-reply.
