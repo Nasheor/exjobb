@@ -511,11 +511,26 @@ The document RFC 4835 is the IETF's recommendation as to what security transform
 
 The lack of certain transforms are, however, a small problem as the implementation easily can be extended thanks to the modularity of the IPsec SA system, which is duplicated in this implementation.
 
-\paragraph{The AH protocol and its associated extension header will not be implemented} as it is made redundant by ESP if tunneling is not used. Here is why:
-% Förklara varför AH är verkningslöst: AH skyddar IPv4-headers, men adresser ska ändå kontrolleras vid mottagning. Om man vill skydda extension headers avsedda för slut-hosten kan dessa placeras inuti ESP-delen. Referera till mail.
-% Beskrivs i RFC 4302
-% FORTSÄTT HÄR!
+\paragraph{The AH protocol and its associated extension header is not implemented} as it's made redundant by ESP in Contiki's $\mu$IP stack.
 
+The difference between the ESP and AH header is commonly described as that ESP provides confidentiality in addition to the integrity and authentication provided by AH, but that AH provides protection for the IP packet's header and extension headers as well. This is true, but a closer examination reveals that AH's `extra protection' provides little value in the case of $\mu$IP as for the following reasons:
+
+Firstly, most extension headers are exempted from AH's authentication/integrity control since they are designed to be altered by the hosts on the packet's path. For example, consider the \emph{Hop-by-Hop Options} or the \emph{Routing} extension headers. However, it can be argued that some extension headers are private to the packet's endpoint, but this argument is void because such headers can be placed inside the ESP header. This is practice is inferred by IPv6's standard document\citep[p.13]{rfc2460} which places the Destination Options header inside ESP's encapsulation, thus protecting it.
+
+Secondly, the authenticity of the source and destination addresses are important as they are used to match an incoming packet to a socket. E.g. manipulation (spoofing) might allow an attacker with low level authorization to gain access to a concurrent connection enjoying higher privileges. The AH header protects against such attacks, but only if no NAT is employed on the packet's path, in which case it cannot be used. Still, without AH, the IPsec processing directives for incoming packets protects against such attacks by virtue of the following step (p.62, RFC 4301):
+
+
+\begin{quotation}
+4.  Apply AH or ESP processing as specified, using the SAD entry
+    selected in step 3a above. Then match the packet against the
+    inbound selectors identified by the SAD entry to verify that the
+    received packet is appropriate for the SA via which it was
+    received.
+\end{quotation}
+
+This implies that the cryptographic key used in protecting the packet must match the packet's traffic pattern (i.e. source and destination address, upper layer protocol and, if applicable, port number). Having stated this, it should be noted that this reasoning only holds true when IPsec is not used for multi- or any-cast, something which $\mu$IP doesn't support as of today.
+
+Finally, the author perceives that he is not alone in questioning the need for AH, even when IPsec is employed in more complicated environments. Personal communication on the IETF's IPsec mailing gave rise to many voices that wanted to have it removed\footnote{Please see \url{http://www.ietf.org/mail-archive/web/ipsec/current/msg07184.html}}, but most importantly IETF changed the requirement level for AH from MUST to MAY with the introduction of RFC 4301. Another benefits of removing AH from $\mu$IP is the possibility of removing the IPsec protocol bit in the underlying 6lowPAN layer as described in \cite{raza2011securing}, thus freeing up allocated space in its header.
 
 
 
