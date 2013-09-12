@@ -517,12 +517,12 @@ Contiki targets\footnote{A compiler is said to be \emph{targeting} a certain CPU
 % As the author only had a rudimentary knowledge (roughly comparable as that of system administrator) of IPsec / IKEv2, he decided to that the safest way.
 
 \section{IPsec}
-At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza12secure}). It had the ability to receive as well as transmit AH and ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used for duplex traffic. This implementation served as a proof-of-concept of the basics of IPsec on Contiki, as well as an IPsec header compression scheme in the underlying MAC-layer. Having stated this, the lack of support for multiple SAs and the inability to negotiate new ones made it difficult to fit it into a real world network environment where communication patterns are subject to constant change.
+At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza12secure}). It had the ability to receive as well as transmit AH and ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used for duplex traffic. This implementation served as a proof-of-concept of the basics of IPsec on Contiki, as well as an IPsec header compression scheme in the underlying MAC-layer. Having stated this, the lack of support for multiple SAs and the inability to negotiate new ones made it difficult to fit it into a real world network environment where communication patterns are subject to constant change and keys need to be renewed as they age and lose their security properties.
 
 In this section, I will begin by describing the IPsec implementation's design specification, its rationale, and most importantly its RFC-compliance. It will then continue with a review of how the technical problems have been solved.
 
 
-\section{IPsec: Requirements}
+\section{IPsec Requirements}
 
 %D Databases
 I decided from early on to implement a subset of IPsec RFC 4301 and associated documents. This was done in order to comply with the \emph{design principle} as outlined earlier, but mostly so because the databases are good at what they do: the implementation can use the SAD to store the SAs; the processing mechanism can use the SPD for policy management etc. There are good reasons as to why theses entities were invented, and leaving them for something else would make the other parts of the system (i.e. IKEv2) harder to implement as the developer would be forced to invent new solutions for doing without these systems. That would increase the work burden.
@@ -692,31 +692,18 @@ if (sad_entry->sa.proto == SA_PROTO_ESP) {
 
 The various helper functions dealing with services of the SAD; SPD; packing, unpacking and integrity of the ESP header, etc are not shown here, but are available in the appendix.
 
-%As the attentive reader probably has noticed, the 
-
-%\subsection{The databases: SAD; SPD and PAD}
-%IPsec and IKE communicates through the databases SPD and SAD. The PAD doesn't need to be a database.
-
-
-
-
-%[BIG image outlining what information is passed between the IP-stack, the IPsec processing subsystem, IKEv2 and the databases (SPD, SAD)]
-
-%\section{AH}
-%AH not needed. E-mail correspondance. Superflous due to ESP integrity.
-
-%\section{ESP}
+% Talk about encryption and decryption
 
 \section{IKEv2}
 The IKEv2 service is implemented as a Contiki Process. Each session is modeled as a mealy state machine [img].
 
 The machine is built to be extended. The following is implemented as of now:
 
-\subsection{Requirements}
+\section{IKEv2 Requirements}
 Shared key auth. No X509. Simplified TS.
 Easily extendable to allow for missing features and other keying schemes for other applications.
 
-\subsection{Implementation}
+\section{IKEv2 Implementation}
 Mealy machines and whatnot
 
 
