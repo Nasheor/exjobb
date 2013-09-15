@@ -694,17 +694,46 @@ The various helper functions dealing with services of the SAD; SPD; packing, unp
 
 % Talk about encryption and decryption
 
-\section{IKEv2}
-The IKEv2 service is implemented as a Contiki Process. Each session is modeled as a mealy state machine [img].
+
+\section{IKEv2 Requirements}
+The prime requirements of the IKEv2 service is to negotiate, maintain and delete SAs shared with other hosts. All other requirements follows from this. In the remainder of this section I will outline the requirements and justify their rationale.
+
+\paragraph{The IKEv2 protocol requires an IKEv2 peer to establish an \emph{IKE session}} with the host that it wish to establish one or more IPsec SAs with. This includes the cryptographic exchange that serves to protect the \emph{IKE session} as well as any future IPsec SA, as the later derives its keying material from it. Naturally, all features required for this handshake has to be supported and implemented in such a way that their security properties are not rendered void. Furthermore, the IKE service has to be able to accommodate multiple concurrent sessions as I believe it will offer flexibility for the applications running on the host (e.g. you, as an application developer, doesn't need to care about how many secure connections your application will open).
+
+\paragraph{The exchange of cryptographic keys} is performed by means of a \emph{Diffie-Hellman} (DH) key exchange\footnote{The Diffie-Hellman key exchange is a scheme that is commonly used for exchanging keys over insecure channels (such as the Internet) in a secure fashion. Diffie-Hellman, and its successor, the RSA scheme, are widely used by Internet applications.}. This exchange is very hardware-intensive in regard to memory as well as calculations (and thus energy), as is typical of asymmetric encryption schemes. This has limited the use of such security mechanisms in IoT systems.
+
+Briefly, the reason that asymmetric encryption is so resource intensive is that it's centered around operations on very large numbers. The operations are very simple (e.g. $A = g^{a} mod p$), but in the case of the popular RSA scheme, the numbers $a$ and $A$, which forms the so called public and private key, respectively, can be so large that they require 3072 bits to represent. A DH exchange with such a long key is most often not feasible in an IoT context.
+
+The method used by RSA (and that is referred to in the example above) is a DH key exchange using certain qualities inherent to multiplicative groups of integers modulo $n$. A development of this idea, called \emph{Elliptic Curve Cryptography (ECC)} allows a DH exchange using much smaller key sizes, without forsaking security. Considering only the DH exchange, ECC provides no technical drawbacks in comparison to RSA, but only benefits in terms hardware resources and energy. Because of this, IETF standardized several ECC parameters (ECP groups) for the use in the IKEv2 protocol (RFC 5114: Additional Diffie-Hellman Groups for Use with IETF Standards\cite{rfc5114}). I believe that the reason as to why ECC isn't already in widespread use is that 1) some parts of ECC is encumbered with patents 2) implementations of RSA are widespread and accepted as the standard solution to asymmetric encryption.
+
+\begin{figure}[h!]
+   \includegraphics[width=1.0\textwidth]{rfc5114-security}
+   \caption{In section 4, `Security Considerations', of RFC 5114\cite{rfc5114} the authors argue that ECC keys can be made much shorter without sacrificing security. Each line is cross-reference of different encryption types and key lengths offering the same cryptographic security. Notably, the benefits of ECC becomes even greater as the level of security is increased.}
+   \label{fig:eccbenefits}
+\end{figure}
+
+In order to evaluate the possibilities of ECC in a resource constrained host, I decided that the IKEv2 implementation should implement the DH key exchange by means of ECC, using one of the shorter groups as seen in \vref{fig:eccbenefits}.
+
+\paragraph{There are many authentication methods featured in the IKEv2 standard}, many of which are cumbersome and requires additional support.
+
+EAP. Shared key etc
+
+\paragraph{}
+As the purpose of this work is to demonstrate IKEv2 bla bla it has to be able to handle multiple sessions etc
+
+The IKEv2 service is implemented as a Contiki Process.
 
 The machine is built to be extended. The following is implemented as of now:
 
-\section{IKEv2 Requirements}
+
 Shared key auth. No X509. Simplified TS.
 Easily extendable to allow for missing features and other keying schemes for other applications.
 
 \section{IKEv2 Implementation}
+ Each session is modeled as a mealy state machine [img].
+
 Mealy machines and whatnot
+
 
 
 \chapter{Evaluation}
@@ -713,6 +742,8 @@ Mealy machines and whatnot
 \section{Memory requirements}
 Maximum stack and heap requirements
 Per SA requirement
+
+Memory requirements with different features turned on/off
 
 \section{Latency}
 * IKE handshake: Energy and time. Total setup time.
