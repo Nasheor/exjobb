@@ -20,6 +20,7 @@
 %\usepackage[margin]{fancyref}
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{tikz}
 
 \DeclareGraphicsExtensions{.pdf,.png,.jpg,.jpeg}
 \graphicspath{ {bilder/} }
@@ -545,7 +546,7 @@ The lack of certain transforms are, however, a small problem as the implementati
 
 The difference between the ESP and AH header is commonly described as that ESP provides confidentiality in addition to the integrity and authentication provided by AH, but that AH provides protection for the IP packet's header and extension headers as well. This is true, but a closer examination reveals that AH's `extra protection' provides little value in the case of $\mu$IP as for the following reasons:
 
-Firstly, most extension headers are exempted from AH's authentication/integrity control since they are designed to be altered by the hosts on the packet's path. For example, consider the \emph{Hop-by-Hop Options} or the \emph{Routing} extension headers. However, it can be argued that some extension headers are private to the packet's endpoint, but this argument is void because such headers can be placed inside the ESP header. This is practice is inferred by IPv6's standard document\citep[p.13]{rfc2460} which places the Destination Options header inside ESP's encapsulation, thus protecting it.
+Firstly, most extension headers are exempted from AH's authentication/integrity control since they are designed to be altered by the hosts on the packet's path. For example, consider the \emph{Hop-by-Hop Options} or the \emph{Routing} extension headers. As a counter argument, it can be stated that some extension headers are private to the packet's endpoint, but this argument is void because such headers can be placed inside the ESP header's encapsulation. This practice is inferred by IPv6's standard document\citep[p.13]{rfc2460} which recommends the \emph{Destination Options} header to be placed inside the encapsulation afforded by the ESP header, thus protecting it.
 
 Secondly, the authenticity of the source and destination addresses are important as they are used to match an incoming packet to a socket. E.g. manipulation (spoofing) might allow an attacker with low level authorization to gain access to a concurrent connection enjoying higher privileges. The AH header protects against such attacks, but only if no NAT is employed on the packet's path, in which case it cannot be used. Still, without AH, the IPsec processing directives for incoming packets protects against such attacks by virtue of the following step (p.62, RFC 4301):
 
@@ -721,22 +722,51 @@ The public key method (PKCS\#1) features the most flexibility and ease-of-use as
 
 Because of these aforementioned reasons, I have opted to implement the Shared Key authentication method as described in \citep[p.49]{rfc5996}. As it only requires the implementation of a simple pseudo-random hashing function (as described in section 2.13), the demands on ROM and CPU (and thus energy) are limited. The downside of this scheme is that it requires a string (the key) to be manually shared and maintained between the hosts that wishes to communicate. Although this gives rise an administrative hassle and arguably weaker security than the certificate alternative, it certainly affords security that's good enough for many situations.
 
-\paragraph{}
-As the purpose of this work is to demonstrate IKEv2 bla bla it has to be able to handle multiple sessions etc
-
-The IKEv2 service is implemented as a Contiki Process.
-
-The machine is built to be extended. The following is implemented as of now:
-
-
-Shared key auth. No X509. Simplified TS.
-Easily extendable to allow for missing features and other keying schemes for other applications.
+% \paragraph{}
+% As the purpose of this work is to demonstrate IKEv2 bla bla it has to be able to handle multiple sessions etc
+% 
+% The IKEv2 service is implemented as a Contiki Process.
+% 
+% The machine is built to be extended. The following is implemented as of now:
+% 
+% 
+% Shared key auth. No X509. Simplified TS.
+% Easily extendable to allow for missing features and other keying schemes for other applications.
 
 \section{IKEv2 Implementation}
  Each session is modeled as a mealy state machine [img].
 
 Mealy machines and whatnot
 
+\begin{center}
+\begin{tikzpicture}[scale=0.15]
+\tikzstyle{every node}+=[inner sep=0pt]
+\draw [black] (4.7,-24.2) circle (3);
+\draw (4.7,-24.2) node {$AUTH\mbox{ }IKE$};
+\draw [black] (74.4,-25.4) circle (3);
+\draw (74.4,-25.4) node {$IKE\mbox{ }INIT$};
+\draw [black] (34.8,-21.9) circle (3);
+\draw [black] (34.8,-21.9) circle (2.4);
+\draw [black] (29.4,-57.1) circle (3);
+\draw [black] (75.75,-22.734) arc (180.8699:-107.1301:2.25);
+\fill [black] (77.34,-24.85) -- (78.14,-25.34) -- (78.13,-24.34);
+\draw [black] (6.837,-22.111) arc (162.07766:-125.92234:2.25);
+\fill [black] (7.66,-24.63) -- (8.27,-25.35) -- (8.57,-24.4);
+\draw [black] (35.756,-24.739) arc (13.24552:-184.50633:16.023);
+\fill [black] (35.76,-24.74) -- (35.45,-25.63) -- (36.43,-25.4);
+\draw [black] (6.78,-22.039) arc (134.24575:43.78156:46.218);
+\fill [black] (72.4,-23.17) -- (72.2,-22.24) -- (71.48,-22.94);
+\draw [black] (36.505,-24.366) arc (31.14479:-48.58818:24.379);
+\fill [black] (31.77,-55.26) -- (32.7,-55.1) -- (32.04,-54.35);
+\draw (40.44,-40.87) node [right] {$Problem$};
+\draw [black] (26.663,-58.322) arc (-70.07017:-216.13432:20.81);
+\fill [black] (26.66,-58.32) -- (25.74,-58.12) -- (26.08,-59.06);
+\draw (2.35,-52.65) node [left] {$Problem$};
+\draw [black] (72.938,-28.019) arc (-30.58651:-79.08836:60.425);
+\fill [black] (32.36,-56.61) -- (33.24,-56.94) -- (33.05,-55.96);
+\draw (59.67,-47.17) node [below] {$Problem$};
+\end{tikzpicture}
+\end{center}
 
 
 \chapter{Evaluation}
