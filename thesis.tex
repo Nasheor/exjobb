@@ -22,8 +22,8 @@
 \usepackage{listings}
 \usepackage{tikz}
 
-\DeclareGraphicsExtensions{.pdf,.png,.jpg,.jpeg}
-\graphicspath{ {bilder/} }
+\DeclareGraphicsExtensions{.pdf,.png,.jpg,.jpeg,.eps}
+\graphicspath{{bilder/}{../share/contiki/fsm/}}
 
 % For prettyref
 \newrefformat{eq}{\textup{(\nameref{#1})}}
@@ -734,39 +734,57 @@ Because of these aforementioned reasons, I have opted to implement the Shared Ke
 % Easily extendable to allow for missing features and other keying schemes for other applications.
 
 \section{IKEv2 Implementation}
- Each session is modeled as a mealy state machine [img].
+The IKEv2 implementation supports several concurrent sessions, each modeled as a mealy state machine\footnote{In a mealy state machine the output is function of the current state as well the current input.} that persists as long as the IKE SA is alive. As I will show, this enables communication with multiple hosts without excessive memory consumption.
 
-Mealy machines and whatnot
+\begin{figure}[h!]
+   \includegraphics[width=1.0\textwidth]{mealy_demo}
+   \caption{IKEv2 service principle}
+   \label{fig:mealydemo}
+\end{figure}
 
-\begin{center}
-\begin{tikzpicture}[scale=0.15]
-\tikzstyle{every node}+=[inner sep=0pt]
-\draw [black] (4.7,-24.2) circle (3);
-\draw (4.7,-24.2) node {$AUTH\mbox{ }IKE$};
-\draw [black] (74.4,-25.4) circle (3);
-\draw (74.4,-25.4) node {$IKE\mbox{ }INIT$};
-\draw [black] (34.8,-21.9) circle (3);
-\draw [black] (34.8,-21.9) circle (2.4);
-\draw [black] (29.4,-57.1) circle (3);
-\draw [black] (75.75,-22.734) arc (180.8699:-107.1301:2.25);
-\fill [black] (77.34,-24.85) -- (78.14,-25.34) -- (78.13,-24.34);
-\draw [black] (6.837,-22.111) arc (162.07766:-125.92234:2.25);
-\fill [black] (7.66,-24.63) -- (8.27,-25.35) -- (8.57,-24.4);
-\draw [black] (35.756,-24.739) arc (13.24552:-184.50633:16.023);
-\fill [black] (35.76,-24.74) -- (35.45,-25.63) -- (36.43,-25.4);
-\draw [black] (6.78,-22.039) arc (134.24575:43.78156:46.218);
-\fill [black] (72.4,-23.17) -- (72.2,-22.24) -- (71.48,-22.94);
-\draw [black] (36.505,-24.366) arc (31.14479:-48.58818:24.379);
-\fill [black] (31.77,-55.26) -- (32.7,-55.1) -- (32.04,-54.35);
-\draw (40.44,-40.87) node [right] {$Problem$};
-\draw [black] (26.663,-58.322) arc (-70.07017:-216.13432:20.81);
-\fill [black] (26.66,-58.32) -- (25.74,-58.12) -- (26.08,-59.06);
-\draw (2.35,-52.65) node [left] {$Problem$};
-\draw [black] (72.938,-28.019) arc (-30.58651:-79.08836:60.425);
-\fill [black] (32.36,-56.61) -- (33.24,-56.94) -- (33.05,-55.96);
-\draw (59.67,-47.17) node [below] {$Problem$};
-\end{tikzpicture}
-\end{center}
+As to begin the explanation, I would like to focus the readers thought on the fact that the peers exchange \emph{messages}. Each such \emph{message} is received by ike\_statem\_incoming\_data\_handler() which multiplexes the message on the basis of the session unique identifier in the IKE header (the IKE SA's SPI). Each such SPI is associated with an IKE session and a corresponding state machine which represents its state.
+
+In the state machine, each \emph{state} is represented by a function that, on the basis of the message received from the other peer, makes a \emph{decision} of how to act, i.e. what message to send in reply. That message is created and transmitted by its associated \emph{transition}, which itself is implemented as a function which only takes the session structure's pointer as its argument. This is a powerful feature of the implementation because it allows a message to be retransmitted without resorting to buffers containing the last transmitted message. Instead, the transition's function (whose pointer resides in the session struct) is simply run again. This saves several hundred bytes of RAM which otherwise would be required for buffer space. As the reply is received, the corresponding state function (determined by the session's data structure), is called and the process repeats.
+
+The data structures and associated mechanism of the previously mentioned machines are interesting, but because of space constraints, they will not be reprinted here. Instead, the curious reader is directed towards the source code and machine.c and machine.h.
+
+Instead, the rest of this section will be devoted to the description of the implementation of the IKEv2 protocol's responder and initiator machine's. We'll begin the former.
+
+\subsection{Initiator machine}
+State machine graf
+
+\subsection{Responder machine}
+Graf
+
+% \begin{center}
+% \begin{tikzpicture}[scale=0.15]
+% \tikzstyle{every node}+=[inner sep=0pt]
+% \draw [black] (4.7,-24.2) circle (3);
+% \draw (4.7,-24.2) node {$AUTH\mbox{ }IKE$};
+% \draw [black] (74.4,-25.4) circle (3);
+% \draw (74.4,-25.4) node {$IKE\mbox{ }INIT$};
+% \draw [black] (34.8,-21.9) circle (3);
+% \draw [black] (34.8,-21.9) circle (2.4);
+% \draw [black] (29.4,-57.1) circle (3);
+% \draw [black] (75.75,-22.734) arc (180.8699:-107.1301:2.25);
+% \fill [black] (77.34,-24.85) -- (78.14,-25.34) -- (78.13,-24.34);
+% \draw [black] (6.837,-22.111) arc (162.07766:-125.92234:2.25);
+% \fill [black] (7.66,-24.63) -- (8.27,-25.35) -- (8.57,-24.4);
+% \draw [black] (35.756,-24.739) arc (13.24552:-184.50633:16.023);
+% \fill [black] (35.76,-24.74) -- (35.45,-25.63) -- (36.43,-25.4);
+% \draw [black] (6.78,-22.039) arc (134.24575:43.78156:46.218);
+% \fill [black] (72.4,-23.17) -- (72.2,-22.24) -- (71.48,-22.94);
+% \draw [black] (36.505,-24.366) arc (31.14479:-48.58818:24.379);
+% \fill [black] (31.77,-55.26) -- (32.7,-55.1) -- (32.04,-54.35);
+% \draw (40.44,-40.87) node [right] {$Problem$};
+% \draw [black] (26.663,-58.322) arc (-70.07017:-216.13432:20.81);
+% \fill [black] (26.66,-58.32) -- (25.74,-58.12) -- (26.08,-59.06);
+% \draw (2.35,-52.65) node [left] {$Problem$};
+% \draw [black] (72.938,-28.019) arc (-30.58651:-79.08836:60.425);
+% \fill [black] (32.36,-56.61) -- (33.24,-56.94) -- (33.05,-55.96);
+% \draw (59.67,-47.17) node [below] {$Problem$};
+% \end{tikzpicture}
+% \end{center}
 
 
 \chapter{Evaluation}
