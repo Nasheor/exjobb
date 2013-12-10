@@ -514,19 +514,26 @@ The IKE SA is retained for future tasks such as re-keying, destruction or creati
 
 \chapter{Design and Implementation}
 \label{cha:doi}
+
+% Varför break:ar vi med standarden i Contiki? Varför är det fortfarande en implementation då?
 Implementing Internet standards in Contiki is often a challenging task. The standards are written with the presumption of hosts with vastly more capable hardware, which requires the engineer to simplify parts of the standard, make generalizations, and omit other parts altogether. This might be difficult as it requires good knowledge of the standard in question as well as the behavior of other implementations. The synthesis of this knowledge allows her to save hardware resources by making shortcuts in her implementation, shortcuts which might very well violate the standard document, but still exhibit a behavior which allows communication with the rest of the Internet. This a good example of the very practical, experimental, approach that is typical of Contiki's development culture.
+
+At this point I would like to remind the reader that most implementations of Internet Services are not standards compliant in one aspect or another, but may still be \emph{interoperable} with other implementations. This is especially true of more complex standards which describe many features. IPsec, for example, also describes APIs solely targeted towards the operating system's applications. These are surely neither applicable, nor necessary, in the context of IoT hosts. In this regard, violation of the standard documents is warranted as it will not hamper interoperability.
+
+% The above statement may be confusing at this time; wasn't this thesis supposed to describe a complete implementation of IPsec and IKEv2? 
+% While reading the following, the reader should keep in mind that most implementations of Internet Standards, are in factThe reader is advised to keep in mind that in the world of general purpose computing, there 
 
 % How about illustrating the above with a quote from A's uIP-paper concerning RFC-compliance?
 
 \section{Development process}
-The original goal of this thesis was to develop a working IKEv2 implementation on top of of an existing IPsec implementation already developed for Contiki. Therefore the literature review started with the RFCs\footnote{Described in so the so called RFC (Request for Comments) publication managed by the IETF and the Internet Society} covering that standard, continuing with other documents as my understanding of the field grew. 
+The original goal of this thesis was to develop a working IKEv2 implementation that would operate with an existing IPsec implementation already developed for Contiki. Therefore the literature review started with the RFCs\footnote{Described in so the so called RFC (Request for Comments) publication managed by the IETF and the Internet Society} covering that standard, continuing with other documents as my understanding of the field grew.
 
 % Move RFC footnote to begin of thesis
 
 I found the body of standard documents large, complex and the systems described therein rich in features. It was unclear what effects a removal or alteration of a behavior could have on the implementation. Therefore the following principle was decided upon:
 
 \begin{quotation}
-\emph{The guiding design principle of the implementation} is that is must be a subset of the standard and follow the described architecture as close as possible. Any deviation from this requires a thorough analysis of the security implications or the implementation will lose its greatest benefit - the security properties brought by the thoroughly vetted IPsec standard.
+\emph{The guiding design principle of the implementation} is that it must be a subset of the standard and follow the described architecture as close as possible. Any deviation from this requires a thorough analysis of the security implications or the implementation will lose its greatest benefit - the security properties brought by the thoroughly vetted IPsec standard.
 \end{quotation}
 
 Obviously, a thorough investigation and rework of the standards' internals would have the possibility of resulting in a more efficient implementation, but such an endeavor would require an effort that certainly would be outside the bounds of this work. 
