@@ -195,7 +195,7 @@ The purpose of the \prettyref{cha:intro} is to give the reader an overview of th
 
 \chapter{Background}
 \label{cha:bg}
-The purpose of this chapter is to introduce the reader to the Contiki OS and the IPsec standard. A good understanding of these systems are necessary to understand the latter \prettyref{cha:doi}.
+The purpose of this chapter is to introduce the reader to the Contiki OS and the IPsec standard. A good understanding of these systems are necessary to understand the later \prettyref{cha:doi}.
 
 \section{Contiki}
 Contiki is an operating system designed for computers with severely constrained resources\cite{dunkels04contiki}. At the time of its original release in 2004 it was targeted at 8-bit micro controllers, ROM on the order of 100 kB and RAM less than 20 kB\citep[1]{dunkels04contiki}. Although the production costs of electronics certainly will continue to fall in future, this doesn't necessarily translate into a lesser interest in resource constrained operating systems such as Contiki - the lower prices can be used to produce more units instead of making existing devices more powerful. The choice of small devices such as the traditional 8- and 16-bit micro-controllers that has been the mainstay of Contiki since its inception\footnote{Examples of micro-controllers commonly used with Contiki are Texas Instrument's MSP430 architecture and Atmel's AVR 8-bit dito.}, is not just about cost, but also about power efficiency. Small chips have been, for various reasons, more energy efficient on a per cycle basis than heavier systems (e.g. the 32-bit  Cortex-M3 platform from the ARM Corporation). Having said that, this is set to change as the more powerful micro-controllers are becoming increasingly energy-efficient, a fact which we will address in the \prettyref{cha:fw}.
@@ -264,7 +264,9 @@ However, adaption of IPv6 has been slow despite growing technical problems with 
 
 \paragraph{IPsec is a suite of protocols} that secures IP packets in an end-to-end fashion. Flows of packets, distinguished by properties such as source and target address, transport layer protocol, etc can be defined and different security policies applied. The system is not only limited to \emph{host-to-host} packet flows, but also allows a host to act as a gateway (termed \emph{security gateway} in the IPsec standard), enabling a secure link between two networks (\emph{network-to-network}) or a network to a host (\emph{network-to-host}). The suite can be implemented either directly in the IP stack of a host, but may also be located between the link layer and the network layer\citep[section 3.3]{rfc4301}, facilitating retrofits of existing stacks.
 
-\paragraph{IPsec provides confidentiality, authen, ... } between these hosts or networks. It 
+The motivation of the IPsec system is to deliver the security services confidentiality, authenticity and integrity in the OSI\footnote{Open Systems Interconnection is the so called ideal network model consisting of a seven layer protocol `stack'.}  stack's network layer, thus securing all data at this level (namely IP packets) and everything that it encapsulates (which is all protocols on higher levels in the stack e.g. TCP, UDP, application protocols). The system is designed in such a way that each compliant host features a set of databases which stores security information such as encryption keys and mechanisms that performs cryptographic operations on IP packets using that information. The hosts uses two extension headers (AH and EPS, as discussed in \nameref{sec:uiphdr}) to communicate security metadata between the hosts. More complex tasks like key negotiation is carried out by a so called key management protocol, one of which is IKEv2 (described in \prettyref{sec:ikebg}). Now, in this section I will introduce IPsec by describing the components that process the IP packets using information stored in the databases. Then, I will continue in \prettyref{sec:uiphdr} by describing the aforementioned extension headers which are used to pass the security meta data between the IPsec hosts.
+
+%\paragraph{IPsec provides confidentiality, authen, ... } between these hosts or networks. It 
 
 
 \begin{figure}[h!]
@@ -273,8 +275,8 @@ However, adaption of IPv6 has been slow despite growing technical problems with 
    \label{fig:ipsec-flow}
 \end{figure}
 
-\label{ipsec_proc}
-\paragraph{In the IPsec processing model} IP-packets are said to be passed from \emph{protected} to \emph{unprotected} network interfaces and vice versa. In the usual case, such as above, there are only one of each. The unprotected interface is always the interface connected to the insecure network, while the protected may be either connected to a secure network (the \emph{security gateway} configuration) or be attached to an operating system's IP stack. The flow of packets between the protected and unprotected interfaces are determined by policies set by the system administrator which are expressed in terms of network- and transport-layer primitives, i.e. IP addresses, port numbers and transport-layer protocols. The policy can cause a packet to be: thrown away (\emph{DISCARD}); forwarded over the IPsec boundary without any action taken (\emph{BYPASS}; removing or applying cryptographic protection of the packet (\emph{PROTECT}). The latter is performed in the module named \emph{AH/ESP} in the fig. no. \ref{fig:ipsec-flow} which we will discuss in length further on (FIX: NO ref to place of disc.?).
+\paragraph{In the IPsec processing model} \label{ipsec_proc}
+IP-packets are said to be passed from \emph{protected} to \emph{unprotected} network interfaces and vice versa. In the usual case, such as above, there are only one of each. The unprotected interface is always the interface connected to the insecure network, while the protected may be either connected to a secure network (the \emph{security gateway} configuration) or be attached to an operating system's IP stack. The flow of packets between the protected and unprotected interfaces are determined by policies set by the system administrator which are expressed in terms of network- and transport-layer primitives, i.e. IP addresses, port numbers and transport-layer protocols. The policy can cause a packet to be: thrown away (\emph{DISCARD}); forwarded over the IPsec boundary without any action taken (\emph{BYPASS}; removing or applying cryptographic protection of the packet (\emph{PROTECT}). The latter is performed in the module named \emph{AH/ESP} in \prettyref{fig:ipsec-flow} which handles the decoding and encoding of the AH and ESP IPv6 extension headers (as discussed in length in \prettyref{sec:uiphdr}).
    
 \paragraph{IPsec affords protection for the traffic passed between networks as well as that between individual hosts.} In the former case, two IP networks are linked to each other by an IP-tunnel\footnote{An IP-tunnel allows communication between two IP-networks that don't have a routing path between each other. As the packets are transported by means of encapsulation (one IP-packets is transported in the payload field of another), other protocols can be `tunneled'  as well.} with an IPsec host at either end, acting as \emph{Security Gateways}. Packets that are routed to the other host's network are encapsulated in a security container (so called AH and ESP headers, which we will explain in \prettyref{sec:bgah} and \prettyref{sec:bgesp}) and dispatched to the Security Gateway at the other end of the tunnel. This allows secure communication between two networks and is useful when their hosts are not configured for IPsec. This mode of operation is referred to as \emph{tunnel mode} in the standards documents.
 
@@ -346,8 +348,8 @@ SA Lifetime: A limit at which the SA should be terminated, expressed in either t
 % SAD
 % SPD
 
-
 \section{Understanding the IP headers}
+\label{sec:uiphdr}
 Understanding IP headers are key to understanding IPsec. I will therefore quickly review the structure of the IPv6 headers before moving on to explain their relationship to IPsec. Below the readers finds a schematic of the IPv6 header, also called the IPv6 `fixed header' for reasons that soon are to be discussed.
 
 \begin{figure}[here]
@@ -438,7 +440,7 @@ The fact that confidentiality protection is optional makes ESP services identica
 % * Security associations
 % 
 
-
+\label{sec:ikebg}
 \section{Automatic key management (IKEv2)}%{Automatic negotiation of SAs (IKEv2)}
 We have now explained the essentials of IPsec: the databases and their relations to each other and how they govern the flow of packets in the IPsec stack. This functionality is all that is required for an interoperable IPsec implementation. However, this requires all SAs to be set by the administrators of the systems in question. I.e. if two such hosts wants to communicate by IPsec the administrators must agree upon, and manually create, the SAs along with their encryption keys and associated settings. Naturally, we would like to automate this in order to lessen the human's workload. This is the purpose of an IPsec Key Management Protocol. At of the time of this document's writing, there are several protocols: IKE (defined in RFC 2407 - 2409)\cite{rfc2407}\cite{rfc2408}\cite{rfc2409}; IKEv2 (RFC 5996)\cite{rfc5996}; KINK (RFC 4330)\cite{rfc4330} and IPSECKEY (RFC 4025)\cite{rfc4025}. What they all have in common is that they solve the problem of automated key management, albeit in different ways, and that they all interface with IPsec through its databases.
 
@@ -781,7 +783,7 @@ In the state machine, each \emph{state} is represented by a function that, on th
 
 The data structures and associated mechanism of the previously mentioned machines are interesting, but because of space constraints, they will not be reprinted here. Instead, the curious reader is directed towards the source code and machine.c and machine.h.
 
-The rest of this section will be devoted to the description of the implementation of the IKEv2 protocol's responder and initiator machine's. We'll begin with the former.
+The rest of this section will be devoted to the description of the implementation of the IKEv2 protocol's responder and initiator machines.
 
 \subsection{Initiator machine}
 State machine graf
@@ -789,39 +791,10 @@ State machine graf
 \subsection{Responder machine}
 Graf
 
-% \begin{center}
-% \begin{tikzpicture}[scale=0.15]
-% \tikzstyle{every node}+=[inner sep=0pt]
-% \draw [black] (4.7,-24.2) circle (3);
-% \draw (4.7,-24.2) node {$AUTH\mbox{ }IKE$};
-% \draw [black] (74.4,-25.4) circle (3);
-% \draw (74.4,-25.4) node {$IKE\mbox{ }INIT$};
-% \draw [black] (34.8,-21.9) circle (3);
-% \draw [black] (34.8,-21.9) circle (2.4);
-% \draw [black] (29.4,-57.1) circle (3);
-% \draw [black] (75.75,-22.734) arc (180.8699:-107.1301:2.25);
-% \fill [black] (77.34,-24.85) -- (78.14,-25.34) -- (78.13,-24.34);
-% \draw [black] (6.837,-22.111) arc (162.07766:-125.92234:2.25);
-% \fill [black] (7.66,-24.63) -- (8.27,-25.35) -- (8.57,-24.4);
-% \draw [black] (35.756,-24.739) arc (13.24552:-184.50633:16.023);
-% \fill [black] (35.76,-24.74) -- (35.45,-25.63) -- (36.43,-25.4);
-% \draw [black] (6.78,-22.039) arc (134.24575:43.78156:46.218);
-% \fill [black] (72.4,-23.17) -- (72.2,-22.24) -- (71.48,-22.94);
-% \draw [black] (36.505,-24.366) arc (31.14479:-48.58818:24.379);
-% \fill [black] (31.77,-55.26) -- (32.7,-55.1) -- (32.04,-54.35);
-% \draw (40.44,-40.87) node [right] {$Problem$};
-% \draw [black] (26.663,-58.322) arc (-70.07017:-216.13432:20.81);
-% \fill [black] (26.66,-58.32) -- (25.74,-58.12) -- (26.08,-59.06);
-% \draw (2.35,-52.65) node [left] {$Problem$};
-% \draw [black] (72.938,-28.019) arc (-30.58651:-79.08836:60.425);
-% \fill [black] (32.36,-56.61) -- (33.24,-56.94) -- (33.05,-55.96);
-% \draw (59.67,-47.17) node [below] {$Problem$};
-% \end{tikzpicture}
-% \end{center}
-
 
 \chapter{Evaluation}
 \label{cha:eval}
+The 
 
 \section{Memory requirements}
 Maximum stack and heap requirements
@@ -841,7 +814,7 @@ RPL and IPsec. Can't form a sensible policy when it doesn't know what network it
 
 ESP conformed to Conformance Requirements (ESP RFC). Didn't conform prior to this (??).
 
-
+Nedlessly complicated: e.g. single duplex SAs
 \chapter{Future Work and Recommendations}
 
 \label{cha:fw}
