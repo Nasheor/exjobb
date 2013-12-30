@@ -31,6 +31,7 @@
 \newrefformat{thm}{theorem `\nameref{#1}'}
 \newrefformat{cha}{chapter `\nameref{#1}'}
 \newrefformat{sec}{section \ref{#1} `\nameref{#1}'}
+\newrefformat{para}{paragraph \ref{#1} `\nameref{#1}'}
 \newrefformat{tab}{table `\nameref{#1}' on page \pageref{#1}}
 \newrefformat{fig}{figure `\nameref{#1}' on page \pageref{#1}}
 
@@ -553,7 +554,7 @@ Contiki targets\footnote{A compiler is said to be \emph{targeting} a certain CPU
 % As the author only had a rudimentary knowledge (roughly comparable as that of system administrator) of IPsec / IKEv2, he decided to that the safest way.
 
 \section{IPsec}
-At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza12secure}). It had the ability to receive as well as transmit AH and ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used for duplex traffic. This implementation served as a proof-of-concept of the basics of IPsec on Contiki, as well as an IPsec header compression scheme in the underlying MAC-layer. Having stated this, the lack of support for multiple SAs and the inability to negotiate new ones made it difficult to fit it into a real world network environment where communication patterns are subject to constant change and keys need to be renewed as they age and lose their security properties.
+At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza11securing}). It had the ability to receive as well as transmit AH and ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used for duplex traffic. This implementation served as a proof-of-concept of the basics of IPsec on Contiki, as well as an IPsec header compression scheme in the underlying MAC-layer. Having stated this, the lack of support for multiple SAs and the inability to negotiate new ones made it difficult to fit it into a real world network environment where communication patterns are subject to constant change and keys need to be renewed as they age and lose their security properties.
 
 In this section, I will begin by describing the IPsec implementation's design specification, its rationale, and most importantly its RFC-compliance. It will then continue with a review of how the technical problems have been solved.
 
@@ -564,6 +565,7 @@ In this section, I will begin by describing the IPsec implementation's design sp
 I decided from early on to implement a subset of IPsec RFC 4301 and associated documents. This was done in order to comply with the \emph{design principle} as outlined earlier, but mostly so because the databases are good at what they do: the implementation can use the SAD to store the SAs; the processing mechanism can use the SPD for policy management etc. There are good reasons as to why theses entities were invented, and leaving them for something else would make the other parts of the system (i.e. IKEv2) harder to implement as the developer would be forced to invent new solutions for doing without these systems. That would increase the work burden.
 
 \paragraph{Tunnel-mode will not be implemented} as I believe the need for such functionality will be small in IoT networks using IPv6. The reasoning behind this is twofold:
+\label{para:tunnel-mode-not-impl}
 
 % No. 1
 Firstly, the most common use cases of network-to-network connections are: The single host connecting to a distant network and its resources (e.g. the telecommuter's VPN connection); the branch office's network's router providing a secure route to the main office's network. I believe that the former cases are the principal usage scenarios of today and can't see any good use of tunneling in IoT hosts. However, there are many situations where an entire IoT network (e.g. ventilation system control) would benefit from a secure tunnel between itself and a friendly organization's network (e.g. the ventilation system's operators). If other network paths than the secure tunnel is disabled, the resulting network topography forms a simple and effective security solution. Having stated this, the secure tunneling code doesn't need to reside in the IoT hosts, but is most conveniently implemented in the network's border router. Secure communication between hosts can still be achieved with IPsec transport mode.
@@ -578,7 +580,7 @@ The document RFC 4835 is the IETF's recommendation as to what security transform
 The lack of certain transforms are, however, a small problem as the implementation easily can be extended thanks to the modularity of the IPsec SA system, which is duplicated in this implementation.
 
 \paragraph{The AH protocol and its associated extension header is not implemented} as it's made redundant by ESP in Contiki's $\mu$IP stack.
-
+\label{para:ah-not-impl}
 The difference between the ESP and AH header is commonly described as that ESP provides confidentiality in addition to the integrity and authentication provided by AH, but that AH provides protection for the IP packet's header and extension headers as well. This is true, but a closer examination reveals that AH's `extra protection' provides little value in the case of $\mu$IP as for the following reasons:
 
 Firstly, most extension headers are exempted from AH's authentication/integrity control since they are designed to be altered by the hosts on the packet's path. For example, consider the \emph{Hop-by-Hop Options} or the \emph{Routing} extension headers. As a counter argument, it can be stated that some extension headers are private to the packet's endpoint, but this argument is void because such headers can be placed inside the ESP header's encapsulation. This practice is inferred by IPv6's standard document\citep[p.13]{rfc2460} which recommends the \emph{Destination Options} header to be placed inside the encapsulation afforded by the ESP header, thus protecting it.
@@ -596,7 +598,7 @@ Secondly, the authenticity of the source and destination addresses are important
 
 This implies that the cryptographic key used in protecting the packet must match the packet's traffic pattern (i.e. source and destination address, upper layer protocol and, if applicable, port number). Having stated this, it should be noted that this reasoning only holds true when IPsec is not used for multi- or any-cast, something which $\mu$IP doesn't support as of today.
 
-Finally, I perceive that I am not alone in questioning the need for AH, even when IPsec is employed in more complicated environments. Personal communication on the IETF's IPsec mailing gave rise to many voices that wanted to have it removed\footnote{Please see \url{http://www.ietf.org/mail-archive/web/ipsec/current/msg07184.html}}, but most importantly IETF changed the requirement level for AH from MUST to MAY with the introduction of RFC 4301. Another benefit of removing AH from $\mu$IP is the possibility of removing the IPsec protocol bit in the underlying 6lowPAN layer as described in \cite{raza2011securing}, thus freeing up allocated space in its header.
+Finally, I perceive that I am not alone in questioning the need for AH, even when IPsec is employed in more complicated environments. Personal communication on the IETF's IPsec mailing gave rise to many voices that wanted to have it removed\footnote{Please see \url{http://www.ietf.org/mail-archive/web/ipsec/current/msg07184.html}}, but most importantly IETF changed the requirement level for AH from MUST to MAY with the introduction of RFC 4301. Another benefit of removing AH from $\mu$IP is the possibility of removing the IPsec protocol bit in the underlying 6lowPAN layer as described in \cite{raza11securing}, thus freeing up allocated space in its header.
 
 
 
@@ -796,74 +798,86 @@ Graf
 \label{cha:eval}
 The software was evaluated using the Cooja emulator as stated in \prettyref{sec:finaldev}. The emulated mote (MSP430x) features a 16 bit CPU with 20 bit memory instructions and runs at 16 MHz. There is 16 kB RAM and 128 kB of flash (for storing program data). Usually IoT application like this is evaluated on the Tmote Sky platform, but as I will soon show you, its 16 bit memory space is too limited (keep in mind that the RAM and flash area occupies the same $2^16$ address space).
 
-\section{Implementation coverage}
-The following features have been implemented:
+The other peer consisted of Cooja's host using the Linux kernel's native IPsec implementation and Strongswan for IKEv2 services.
 
-\begin{verbatim}
-   IPsec: Should be standards-compliant
-   =============================================================================================
-   Major features implemented:
-           Replay protection
-           ESP
-           Transport mode
-           Traffic selectors (traffic multiplexing over SAs)
-           SAD, with SA expiration mechanism
-           SPD and related functions (incl. one SA offer for each SPD rule)
-           Encryption
-                   ESP-NULL
-                   AES-CTR, varying key length (only 128 bit tested). Partial rewrite of Simon's code.
-           Integrity
-                   AES-XCBC. Partial rewrite of Simon's code.
+\section{IPsec implementation coverage}
+The IPsec part of this implementation should be, to the best of the author's knowledge, compliant with all relevant standards with the exception of certain features (see \ref{ipsec-features-not-imp}).
+
+\subsection{Major features implemented}
+\begin{itemize}
+   \item Packet replay protection
+   \item The ESP header
+   \item IPsec Transport mode
+   \item Traffic selectors (traffic multiplexing over SAs)
+   \item SAD, with mechanism for SA expiration
+   \item SPD and related functions (including one SA offer for each SPD rule)
+   \item Confidentiality protection (Encryption): 
+   \begin{itemize}
+      \item ESP-NULL
+      \item AES-CTR, varying key length (only 128 bit tested). This was a partial rewrite of Simon Duquennoy's code.
+   \end{itemize}
+   \item Integrity protection:
+   \begin{itemize}
+           \item AES-XCBC. This was a partial rewrite of Simon Duquennoy's code.
+   \end{itemize}
+\end{itemize}
+
+\subsection{Major features not implemented}
+\label{ipsec-features-not-imp}
+\begin{itemize}
+        \item The AH header
+        \item IPsec Tunnel mode
+        \item Various integrity and encryption algorithms that the standards document regards as required.
+\end{itemize}
+
+The lack of support for the AH header and tunnel mode is of no consequence for reasons as described in \prettyref{para:ah-not-impl} and \prettyref{para:tunnel-mode-not-impl}, respectively. The lack of support for encryption transforms other than AES-CTR and AES-XCBC can be hampering to interoperability, but this IPsec implementation is fashioned in such a way that new transforms can be implemented with ease.
+
+\section{IKEv2 implementation coverage}
+The IKEv2 implementation is a subset of the standard described by RFC 5996. It's not standards compliant because of missing features.
+
+\subsection{Major features implemented}
+\begin{itemize}
+   \item State machine for responder
+   \item State machine for initiator
+   \item ECC DH (only featuring support for DH group no. 25)
+   \item Authentication by means of a pre-shared key
+   \item Traffic selector negotiation (only a simplification of \citep{rfc5996}[section 2.9]'s algorithm)
+   \item SPD interface that allows multiple IKE SA offers
+   \item SK payload: Code for encryption and integrity is shared with IPsec's ESP
+   \item Multiple concurrent sessions supported
+   \item Multiple child SAs per IKE SA
+\end{itemize}
+
+\subsection{Major features not implemented}
+\begin{itemize}
+   \item Cookie handling (the code has been written, but it has not been tested)
+   \item Only tunnel mode negotiation supported
+   \item No EAP support
+   \item No NAT support
+   \item No IPcomp support
+   \item Only IDs of type ID\_RFC822\_ADDR (e-mail address) are supported
+   \item No support for Certificates as IDs, nor for authentication
+   \item No state machine for established sessions
+\end{itemize}
+
+The established state machine was not implemented because of time constraints, but doing so is not difficult. This resulted in that the IKEv2 service doesn't recognize the Delete Payload and thus cannot delete SAs, nor can new Child SAs be created.
+
+%Features that should be implemented in IKEv2, but haven't yet:
+% Deletion of Child and IKE SAs (Delete payload)
+% State machine Established can't create child SAs currently
 
 
-   Major features not implemented:
-           AH
-           Tunnel mode
-           Various integrity and encryption algorithms tagged as REQUIRED
-
-
-   IKEv2: Implements a subset of RFC 5996 and associated standards, but
-   is not standards-compliant because of missing features.
-   =============================================================================================
-   Major features implemented:
-           State machine for responder
-           State machine for initiator
-           ECC DH (only DH group 25)
-           Authentication by means of pre-shared key
-           Traffic selector negotiation (note: this is only a simplification of section 2.9's algorithm)
-           SPD interface that allows multiple IKE SA offers
-           SK payload: Encryption and integrity is the same as in IPsec (it's a
-   common interface)
-           Multiple concurrent sessions supported
-           Multiple child SAs per IKE SA
-
-   Major features not implemented:
-           Cookie handling (the code is there, but it's not tested)
-           Only tunnel mode supported
-           EAP
-           No NAT support whatsoever, anywhere
-           No IPcomp support
-           Only IDs of type ID_RFC822_ADDR (e-mail address) are supported
-           No support for Certificates as IDs, nor for authentication
-
-
-   Features that should be implemented in IKEv2, but haven't yet:
-   Deletion of Child and IKE SAs (Delete payload)
-   State machine Established can't create child SAs currently
-\end{verbatim}
-
-\section{Resource requirements}
-
+\section{Test setup}
 The software can be configured to be built with different feature sets so that the developer can reduce the resource requirement. This gives rise to a large number of feature-sets that can be evaluated. In order to reduce the size of the investigation to manageable proportions, I have elected to limit myself to the two most important configurations:
 
 \begin{itemize}
-   \item IPsec with manual keying. Henceforth named NOIKE.
-   \item IPsec with automatic keying only and IKEv2. Henceforth named WITHIKE.
+   \item IPsec with manual keying and a test application that replies to UDP packets. Henceforth named NOIKE.
+   \item IPsec with automatic keying only, IKEv2 and a test application that replies to UDP packets. Henceforth named WITHIKE.
 \end{itemize}
 
 NOIKE's SAs were configured to use AES-XCBC-MAC-96\cite{rfc3566} for integrity / authentication and AES-CTR\cite{rfc3686} for confidentiality. The key length of the latter was 128 bits.
 
-The IKEv2 offer of the WITHIKE system was set up in such a way that it and its peer negotiated SAs of the same configuration as that of the NOIKE system. The handshake was triggered by the user level transmission of a UDP packet (using the \emph{nc} utility) from the PC so that the Strongswan's \emph{charon} demon initiated a key exchange with the mote's IKEv2 service (making use of the IKEv2 service's responder state machine). The key exchange used $192$ bit ECC keys (the curve is named secp192r1 as described in `Additional Diffie-Hellman Groups for Use with IETF Standards' in RFC 5114\cite{rfc5114}). A shared secret was used for authentication as this is the only type of authentication implemented in the service as of today.
+The IKEv2 offer of the WITHIKE system was set up in such a way that it and its peer negotiated SAs of the same configuration as that of the NOIKE system. The handshake was triggered by the PC by attempting to transmit a UDP packet (using the \emph{nc} utility) from the PC to the mote using a port that was configured for protection. That caused Strongswan's \emph{charon} demon initiated a key exchange with the mote's IKEv2 service (making use of the IKEv2 service's responder state machine). The key exchange used $192$ bit ECC keys (the curve is named secp192r1 as described in `Additional Diffie-Hellman Groups for Use with IETF Standards' in RFC 5114\cite{rfc5114}). A shared secret was used for authentication as this is the only type of authentication implemented in the service as of today.
 
 \section{ROM and RAM requirements}
 \label{imagecomp}
@@ -876,25 +890,36 @@ All code was compiled with MSPGCC 4.7.2 without debug symbols and using the opti
 \end{quotation}
 
 This resulted in the following figures for a default Contiki system (i.e. no IPsec / IKEv2 features), NOIKE and WITHIKE, respectively:
+
+\begin{figure}[h]
 \begin{verbatim}
-text	   data	    bss	    dec	    hex	filename
-91331	    288	   9585	 101204	  18b54	ipsec-example.default
-
-text	   data	    bss	    dec	    hex	filename
-91331	    288	   9585	 101204	  18b54	ipsec-example.NOIKE
-
-text	   data	    bss	    dec	    hex	filename
-91331	    288	   9585	 101204	  18b54	ipsec-example.WITHIKE
+    text	   data	    bss	    dec	filename
+   55734	    264	   9310	  65308	manualsa-noike.wismote
+   47502	    252	   8960	  56714	noipsec.wismote
+   74241	    288	   9582	  84111	nomanualsa-ike.wismote
 \end{verbatim}
+\caption{Raw figures for ROM and RAM requirements as given by the `size' command.}
+\end{figure}
 
-This gives a size of...
 
-\begin{tabular}{|c|l|l}
-asdas       & ROM    & RAM       \\
-default     & 0 B    & 0 B        \\
-NOIKE       & 8 kB   & 512 B     \\
-WITHIKE     & 20 kB  & 512 B
+% 54,685546875 9,349609375
+% 46,634765625 8,99609375
+% 72,7822265625   9,638671875
+
+\begin{figure}[h]
+\begin{tabular}{c|l|l}
+Configuration  & ROM (text + data)           & RAM (data + BSS)            \\ \hline
+default (Contiki with $\mu$IP6)        & 46.6 kB                     & 9.0 kB                      \\
+NOIKE          & 54.7 ($\Delta8.1$) kB    & 9.4 ($\Delta0.4$) kB     \\
+WITHIKE        & 72.8 ($\Delta26.2$) kB   & 9.6 ($\Delta0.6$) kB
 \end{tabular}
+\caption{ROM and RAM requirements, with size difference relative to the default configuration noted.}
+\end{figure}
+
+% Det är normalt att bss är mycket större än data. bss är oinitialiserat minne som t ex granntabeller, paketbuffrar, etc. medan data är initialiserat minne vars värden kopieras upp från flash vid boot (tex "static int v = 47;").
+% 
+% Totalt använt flash ~= text + data
+% Totalt använt minne ~= data + bss
 
 %#################
 
@@ -915,7 +940,7 @@ WITHIKE     & 20 kB  & 512 B
 \section{Stack requirements}
 \paragraph{If the stack grows to large} it will overwrite the heap or simply exit the RAM's memory area. Therefore, we want to know its maximum extent in different situations. Also, HEAP
 
-The stack requirements for the NOIKE configuration have not been measured as they are considered very limited - probably not more than a couple of 100 B. This can be assumed by the fact that the IPsec source code 1) is not deeply nested (i.e. depth of the function calls) 2) there are no large buffers in those function calls. 
+The stack requirements for the NOIKE configuration have not been measured as they are considered very limited - probably not more than 100 B. This can be assumed by the fact that the IPsec source code 1) is not deeply nested (i.e. depth of the function calls) 2) there are no large variables in those function calls. 
 
 %Furthermore, the source code in question is only executed during the course of the transmission or reception of an IP packet. I.e. the stack allocation has been freed once the $\mu$IP code exits.
 
@@ -923,7 +948,7 @@ However, the stack requirements of the WITHIKE configuration are extensive becau
 
 \paragraph{The size of the stack was measured by} writing a 2 kB long string consisting of the letter `h' to the top of the stack before commencing the IKEv2 handshake. That string's memory was then investigated after the handshake to see what parts had been overwritten by the service's handshake routines:
 
-\begin{figure}
+\begin{figure}[h]
 \centering
 \begin{verbatim}
 for ( i = STACK_MAX_MEM - 5;
@@ -937,13 +962,16 @@ for ( i = STACK_MAX_MEM - 5;
 
 The maximum extent of the stack during the handshake was found to be 320 Bytes according to this method.
 
+\begin{figure}[h]
+\centering
 \begin{tabular}{c|l}
 Exchange                      & Maximum extent of stack  \\ \hline
 IKE\_SA\_INIT exchange      & $321$ B                    \\
 IKE\_AUTH exchange          & $203$ B                    \\
-   After handshake            & Not applicable
+After handshake            & Not applicable
 \end{tabular}
-
+\caption{Size of the stack at different times during the key exchange.}
+\end{figure}
 
 \section{Heap requirements}
 The use of heap allocation is not customary in Contiki - fixed buffers are used instead. However, I elected to use the heap (by making use of the \emph{malloc} call) in the IPsec as well as the IKEv2 code as the memory requirements varies extensively by activity.
@@ -951,12 +979,16 @@ The use of heap allocation is not customary in Contiki - fixed buffers are used 
 The memory usage was traced by creating a wrapper function around the call to \emph{malloc} and \emph{free} that kept statistics on memory allocation. This resulted in the following memory pattern for the node when acting as the IKEv2 responder:
 
 
+\begin{figure}[h]
+\centering
 \begin{tabular}{c|l}
 Exchange                      & Allocated memory on the heap  \\ \hline
 IKE\_SA\_INIT exchange      & 930 B                    \\
 IKE\_AUTH exchange          & 1142 B                    \\
 After handshake            & 402 B
 \end{tabular}
+\caption{Size of the heap at different times during the key exchange.}
+\end{figure}
 
 Of the remaining memory, $2 * 106 B$ is used for the SAs\footnote{Keep in mind that IPsec requires one SA for each direction} and 190 B is consumed by the IKE SA. If more SAs are created using this IKE SA, the memory consumption would increase on the order of $2 * 106 B$ per duplex connection.
 % 
@@ -970,14 +1002,18 @@ Of the remaining memory, $2 * 106 B$ is used for the SAs\footnote{Keep in mind t
 \section{Latency}
 The CPU time consumed by the IKEv2 service during a key exchange is 10.9 seconds when run on the Wismote. This excludes the time required to transmit the messages and the other peer's delay. The total time (i.e. clock time) for a key exchange is 11.1 seconds. That includes message transmission time as well as the delay caused by the other peer.
 
+\begin{figure}[h]
+\centering
 \begin{tabular}{c|l}                        
 Exchange                   & CPU Time consumed    \\ \hline
 IKE\_SA\_INIT exchange       & 6.91 s               \\
 IKE\_AUTH exchange          & 3.97 s               \\
 Total                      & 10.87 s            
 \end{tabular}                                   
+\caption{Time requirements for the different phases of the key exchange.}
+\end{figure}
 
-The latency / CPU time associated with the NOIKE option was not investigated as the bulk of its execution time is spent in code  that is virtually the same as the one found in \cite{raza2011securing} (the code in question concerns cryptographic operations). The paper in question features a number of investigations covering latency and energy usage of the code concerned.
+The latency / CPU time associated with the NOIKE option was not investigated as the bulk of its execution time is spent in code  that is virtually the same as the one found in \cite{raza11securing} (the code in question concerns cryptographic operations). The paper in question features a number of investigations covering latency and energy usage of the code concerned.
 
 %* IPsec packet: Energy required for receiving, energy required for transmitting. Roundtrip times. 
 %IPsec packet: See Shahid's paper. Should be very similar. CC2420 crypt?
