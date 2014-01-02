@@ -755,6 +755,7 @@ In order to evaluate the possibilities of ECC in a resource constrained host, I 
 
 \paragraph{IKEv2 supports several authentication methods:} public key signatures, shared secrets and the Extensible Authentication Protocol (EAP)\cite{rfc3748}. As EAP is more complicated (i.e. higher complexity) than the other methods, I believe it's of no interest to this implementation and thus I will only focus on the former methods. Section 2.15 in RFC 5996 serves as a good introduction to the mechanisms used by the former methods (public key and shared secrets). What both schemes have in common is that they both perform a cryptographic operation on a string which is a concatenation of different IKEv2 messages and values shared by both parties\citep[p.48]{rfc5996}. (Please note that the formerly described DH key exchange only provides the hosts (peers) with a shared secret, not authentication. Thus, without any type of authentication, we're liable to a Man-In-The-Middle attack.)
 
+% FIX: This justification is no good 
 The public key method (PKCS\#1) features the most flexibility and ease-of-use as it allows the peers to authenticate themselves using well known X.509 certificates, possibly using a public key infrastructure. Still, this method has not been implemented as it requires the implementation of digital signature algorithms\footnote{I had access to code that implemented digital signatures using Elliptic Curve Cryptography, but the work required to implement it with IKEv2 would have been far too large.}; handling the X.509 certificates and the associated payload and more. Not only would the required work effort be prohibitive, but the value of the work would be questionable as the extra asymmetric operation\footnote{We already perform one asymmetric operation during the DH key exchange} and the associated code itself would probably make it unpractical on current hardware.
 
 Because of these aforementioned reasons, I have opted to implement the Shared Key authentication method as described in \citep[p.49]{rfc5996}. As it only requires the implementation of a simple pseudo-random hashing function (as described in section 2.13), the demands on ROM and CPU (and thus energy) are limited. The downside of this scheme is that it requires a string (the key) to be manually shared and maintained between the hosts that wishes to communicate. Although this gives rise an administrative hassle and arguably weaker security than the certificate alternative, it certainly affords security that's good enough for many situations.
@@ -783,15 +784,29 @@ As to begin the explanation, I would like to focus the readers thoughts on the f
 
 In the state machine, each \emph{state} is represented by a function that, on the basis of the message received from the other peer, makes a \emph{decision} of how to act, i.e. what message to send in reply. That message is created and transmitted by its associated \emph{transition}, which itself is implemented as a function which only takes the session structure's pointer as its argument. This is a powerful feature of the implementation because it allows a message to be retransmitted without resorting to buffers storing the last transmitted message. Instead, the transition's function (whose pointer resides in the session struct) is simply run again. This saves several hundred bytes of RAM which otherwise would be required for buffer space. As the reply is received, the corresponding state function (determined by the session's data structure), is called and the process repeats.
 
-The data structures and associated mechanism of the previously mentioned machines are interesting, but because of space constraints, they will not be reprinted here. Instead, the curious reader is directed towards the source code and machine.c and machine.h.
+The data structures and associated mechanism of the previously mentioned machines are interesting, but because of space constraints, they will not be reprinted here. Instead, the curious reader is directed towards the source code and machine.c and machine.h in particular.
 
 The rest of this section will be devoted to the description of the implementation of the IKEv2 protocol's responder and initiator machines.
 
 \subsection{Initiator machine}
-State machine graf
+The session begins by 
+
+
+\begin{figure}[h!]
+   \includegraphics[width=1.0\textwidth]{initiator_mealy}
+   \caption{Initiator machine example}
+   \label{fig:mealydemo}
+\end{figure}
 
 \subsection{Responder machine}
 Graf
+
+
+\begin{figure}[h!]
+   \includegraphics[width=1.0\textwidth]{responder_mealy}
+   \caption{Responder machine example}
+   \label{fig:mealydemo}
+\end{figure}
 
 
 \chapter{Evaluation}
@@ -860,7 +875,7 @@ The IKEv2 implementation is a subset of the standard described by RFC 5996. It's
    \item No state machine for established sessions
 \end{itemize}
 
-The established state machine was not implemented because of time constraints, but doing so is not difficult. This resulted in that the IKEv2 service doesn't recognize the Delete Payload and thus cannot delete SAs, nor can new Child SAs be created.
+The established state machine was not implemented because of time constraints, but doing so would be a straightforward task and would not require any changes to the architecture of the software. This resulted in that the IKEv2 service doesn't recognize the Delete Payload and thus cannot delete SAs, nor can new Child SAs be created.
 
 %Features that should be implemented in IKEv2, but haven't yet:
 % Deletion of Child and IKE SAs (Delete payload)
