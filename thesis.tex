@@ -191,7 +191,7 @@ A final possibility would be to come to a conclusion by using analysis. Supposin
 This report makes three scientific contributions. The first is the demonstration of that it's feasible to implement IPsec with dynamic key management and IKEv2 in the Contiki OS. The second is that it's possible to simplify the IPsec protocol in IPv6-IoT environments without sacrificing much in interoperability. The final is that IPsec's network-centric policy language is ill suited for ad-hoc, self-organized network environments, such as that created by the RPL\footnote{The Routing Protocol for Low-Power and Lossy Networks (RPL) is an IETF standard (RFC 6553) that creates dynamic routing topologies} routing protocol commonly used in conjunction with IoT.
 
 \section{Report Structure}
-The purpose of the \prettyref{cha:intro} is to give the reader an overview of the report. The next chapter, \nameref{cha:bg}, will begin by a discussion of the problems that are particular to the field of IoT and how Contiki is constructed. This will be followed by a brief recount of the background and design of IPsec, followed by an introduction to automatic keying and the IKEv2 protocol. In \prettyref{cha:doi} I outline how the IPsec standard is adapted to IoT and Contiki. Simplifications and omissions of features are explained and argued for. The design is then evaluated in \nameref{cha:eval} by measuring parameters such as time, energy and memory usage when sending and receiving data. Space will also be given to observations of a qualitative nature, such as how well the standard integrates with the Contiki OS. My opinions of the evaluation and suggestions for future work is given in \nameref{cha:fw}.
+The purpose of the \prettyref{cha:intro} is to give the reader an overview of the report. The next chapter, \nameref{cha:bg}, will begin by a discussion of the problems that are particular to the field of IoT and how Contiki is constructed. This will be followed by a brief recount of the background and design of IPsec, followed by an introduction to automatic keying and the IKEv2 protocol. In \prettyref{cha:doi} I outline how the IPsec standard is adapted to IoT and Contiki. Simplifications and omissions of features are explained and argued for. The design is then evaluated in \nameref{cha:eval} by measuring parameters such as time, energy and memory usage when sending and receiving data. Space will also be given to observations of a qualitative nature, such as how well the standard integrates with the Contiki OS. My opinions of the evaluation and suggestions for future work is given in \nameref{sec:fw}.
 
 
 \chapter{Background}
@@ -199,7 +199,7 @@ The purpose of the \prettyref{cha:intro} is to give the reader an overview of th
 The purpose of this chapter is to introduce the reader to the Contiki OS and the IPsec standard. A good understanding of these systems are necessary to understand the later \prettyref{cha:doi}.
 
 \section{Contiki}
-Contiki is an operating system designed for computers with severely constrained resources\cite{dunkels04contiki}. At the time of its original release in 2004 it was targeted at 8-bit micro controllers, ROM on the order of 100 kB and RAM less than 20 kB\citep[1]{dunkels04contiki}. Although the production costs of electronics certainly will continue to fall in future, this doesn't necessarily translate into a lesser interest in resource constrained operating systems such as Contiki - the lower prices can be used to produce more units instead of making existing devices more powerful. The choice of small devices such as the traditional 8- and 16-bit micro-controllers that has been the mainstay of Contiki since its inception\footnote{Examples of micro-controllers commonly used with Contiki are Texas Instrument's MSP430 architecture and Atmel's AVR 8-bit dito.}, is not just about cost, but also about power efficiency. Small chips have been, for various reasons, more energy efficient on a per cycle basis than heavier systems (e.g. the 32-bit  Cortex-M3 platform from the ARM Corporation). Having said that, this is set to change as the more powerful micro-controllers are becoming increasingly energy-efficient, a fact which we will address in the \prettyref{cha:fw}.
+Contiki is an operating system designed for computers with severely constrained resources\cite{dunkels04contiki}. At the time of its original release in 2004 it was targeted at 8-bit micro controllers, ROM on the order of 100 kB and RAM less than 20 kB\citep[1]{dunkels04contiki}. Although the production costs of electronics certainly will continue to fall in future, this doesn't necessarily translate into a lesser interest in resource constrained operating systems such as Contiki - the lower prices can be used to produce more units instead of making existing devices more powerful. The choice of small devices such as the traditional 8- and 16-bit micro-controllers that has been the mainstay of Contiki since its inception\footnote{Examples of micro-controllers commonly used with Contiki are Texas Instrument's MSP430 architecture and Atmel's AVR 8-bit dito.}, is not just about cost, but also about power efficiency. Small chips have been, for various reasons, more energy efficient on a per cycle basis than heavier systems (e.g. the 32-bit  Cortex-M3 platform from the ARM Corporation). Having said that, this is set to change as the more powerful micro-controllers are becoming increasingly energy-efficient, a fact which we will address in the \prettyref{sec:fw}.
 
 Having stated this, Contiki's greatest benefit is not that it's very compact, it's that it provides `a rich enough execution environment while staying within the limitations of the constrained devices'\citep[Introduction]{dunkels04contiki}. The `rich execution environment' is a reference to Contiki's capability to dynamically load and unload software, its multithreading, mesh networking\cite{tsiftes10rpl} and more, that are all designed to fit within the constraints, memory- as well as energy-wise (i.e. limit the number of execution cycles and keep peripherals such as the radio asleep). We will now review the most important of these features that makes Contiki a popular OS for IoT-devices.
 
@@ -615,7 +615,9 @@ Finally, I perceive that I am not alone in questioning the need for AH, even whe
 %Note: Get doxygen up and running for code graphs and whatnot
 
 \section{IPsec Implementation}
-IPsec is implemented as a part of the $\mu$IP stack. The ESP header of incoming packets are unpacked in the loop that handles IPv6 extension headers. Incoming packets are processed according to the directives described in section 5.2 of RFC 4301. This includes fetching the SA associated with the ESP header's SPI; asserting the packet's integrity; decrypting it and asserting that it's not a replay.
+IPsec is implemented as a part of the $\mu$IP stack. The ESP header of incoming packets is unpacked in the loop that handles IPv6 extension headers, a design choice which makes the implementation capable of interpreting the extension header regardless of its position relative to other extension headers.
+
+Incoming packets, protected by IPsec or not, are processed according to the directives described in RFC 4301\citep[section 5.2]{rfc4301} which outlines the processing directives. The steps includes fetching the SA associated with the ESP header's SPI; asserting the packet's integrity; decrypting it and asserting that it's not a replay.
 
 \lstset{language=c}
 \begin{lstlisting}
@@ -789,7 +791,7 @@ The data structures and associated mechanism of the previously mentioned machine
 The rest of this section will be devoted to the description of the implementation of the IKEv2 protocol's responder and initiator machines.
 
 \subsection{Initiator machine}
-The session begins by 
+The session begins by ... walkthrough
 
 
 \begin{figure}[h!]
@@ -799,7 +801,7 @@ The session begins by
 \end{figure}
 
 \subsection{Responder machine}
-Graf
+The responder shares almost all of its code with the initiator. 
 
 
 \begin{figure}[h!]
@@ -813,7 +815,7 @@ Graf
 \label{cha:eval}
 The software was evaluated using the Cooja emulator as stated in \prettyref{sec:finaldev}. The emulated mote (MSP430x) features a 16 bit CPU with 20 bit memory instructions and runs at 16 MHz. There is 16 kB RAM and 128 kB of flash (for storing program data). Usually IoT application like this is evaluated on the Tmote Sky platform, but as I will soon show you, its 16 bit memory space is too limited (keep in mind that the RAM and flash area occupies the same $2^16$ address space).
 
-The other peer consisted of Cooja's host using the Linux kernel's native IPsec implementation and Strongswan for IKEv2 services.
+The other peer consisted of Cooja's host using the Linux kernel's native IPsec implementation and the Strongswan software suite for providing the IKEv2 services.
 
 \section{IPsec implementation coverage}
 The IPsec part of this implementation should be, to the best of the author's knowledge, compliant with all relevant standards with the exception of certain features (see \ref{ipsec-features-not-imp}).
@@ -848,6 +850,7 @@ The IPsec part of this implementation should be, to the best of the author's kno
 The lack of support for the AH header and tunnel mode is of no consequence for reasons as described in \prettyref{para:ah-not-impl} and \prettyref{para:tunnel-mode-not-impl}, respectively. The lack of support for encryption transforms other than AES-CTR and AES-XCBC can be hampering to interoperability, but this IPsec implementation is fashioned in such a way that new transforms can be implemented with ease.
 
 \section{IKEv2 implementation coverage}
+\label{sec:ike-impl-coverage}
 The IKEv2 implementation is a subset of the standard described by RFC 5996. It's not standards compliant because of missing features.
 
 \subsection{Major features implemented}
@@ -928,6 +931,7 @@ default (Contiki with $\mu$IP6)        & 46.6 kB                     & 9.0 kB   
 NOIKE          & 54.7 ($\Delta8.1$) kB    & 9.4 ($\Delta0.4$) kB     \\
 WITHIKE        & 72.8 ($\Delta26.2$) kB   & 9.6 ($\Delta0.6$) kB
 \end{tabular}
+\label{tab:rom-ram-eval}
 \caption{ROM and RAM requirements, with size difference relative to the default configuration noted.}
 \end{figure}
 
@@ -953,7 +957,7 @@ WITHIKE        & 72.8 ($\Delta26.2$) kB   & 9.6 ($\Delta0.6$) kB
 % Different types of RAM req.: stack vs global vars
 
 \section{Stack requirements}
-\paragraph{If the stack grows to large} it will overwrite the heap or simply exit the RAM's memory area. Therefore, we want to know its maximum extent in different situations. Also, HEAP
+\paragraph{If the stack grows to large} it will overwrite the heap or simply exit the RAM's memory area. Therefore, we want to know its maximum extent in different situations.
 
 The stack requirements for the NOIKE configuration have not been measured as they are considered very limited - probably not more than 100 B. This can be assumed by the fact that the IPsec source code 1) is not deeply nested (i.e. depth of the function calls) 2) there are no large variables in those function calls. 
 
@@ -1033,22 +1037,64 @@ The latency / CPU time associated with the NOIKE option was not investigated as 
 %* IPsec packet: Energy required for receiving, energy required for transmitting. Roundtrip times. 
 %IPsec packet: See Shahid's paper. Should be very similar. CC2420 crypt?
 
+\section{Complexity}
+The size of the total code base encompass at least X lines of code, whereof X-N lines are of my work.
+
+cloc ../../core/net/ipsec/. Gör diff mellan ipsectng och master.
 
 \chapter{Discussion}
+In this chapter I will discuss the results described above, the methodologies used in gathering them, 
+
+\section{Evaluation method}
+In addition to demonstrating the usability of the implementation (i.e management of SAs), the the primary concern of the evaluation was measuring ROM and RAM consumption as well as CPU requirements (i.e. latency).
+
+The evaluation demonstrated the automatic negotiation of SAs, a test which also covered the basic working of the SAD, the SPD and the rest of the IPsec system. The author believes that these result are easy to reproduce in other conditions with different network configurations and Contiki applications of different communication patterns. This is especially true of the IPsec system which encompass header generation and parsing (the uIP6 implementation), the SPD and the SAD, where the implementation should be complete and therefore have a high degree of interoperability.
+
+The evaluation of the IKEv2 system only covered portions of what the standards documents considers mandatory for an implementation. The reason for this is twofold: the minimalistic implementation (i.e. lack of features to be tested) and the time required for configuring, testing and writing more test. The biggest downfall of this was the lack of testing of the traffic selector negotiation, whose algorithm is a simplification of that described in the standards documents. The author is not sure how it will function when negotiating other SPD offers\footnote{Please remember that the SPD offer for different SPD policies is configured by the peer's administrator.} with peers running other IKEv2 implementations than Strongswan.
+
+The evaluation of the image's ROM and RAM usage was straightforward and the numbers should be correct, caveat the following: the test application's (the UDP message `bouncer') was included in all images of table \cite{tab:rom-ram-eval}; no status, nor any error message strings were included in the binary, making in-field diagnostics difficult.
+
+Stack and heap measurement figures should be correct to the byte by virtue of the evaluation techniques described in \cite{cha:eval}.
+
+Time / latency testing was only performed on the Wismote platform as it was, arguably, the weakest platform that could comfortably accommodate the software. The rationale of that choice is that by ascertaining the functionality of the software on a simple platform, it can be assumed that it will work better on more powerful ones.
+
+\section{Evaluation results}
+
+Diskutera mina resultat: Styrkor och svagheter i vad gäller undersökningsmetodiken såväl som resultatet.
+
+Kodningshantverk.
+
+Is the software too big? RAM requirements? Space left over for userland apps?
+
+\section{Implementation coverage}
+   
+ The part \ref{sec:ike-impl-coverage} provides a short list of the missing components, of which the following are considered mandatory by the standard: Cookies, 
+
+The IPsec system might, like all implemenation, feature
+Still, the test was rather limited when it  the IKEv2 SA negotiation. There were The reason for this was did only cover a subset of traffic pattern routing, 
+
+which also This also, in turn, demonstrated
+
+
 RPL and IPsec. Can't form a sensible policy when it doesn't know what network it's on.
 
 ESP conformed to Conformance Requirements (ESP RFC). Didn't conform prior to this (??).
 
 Nedlessly complicated: e.g. single duplex SAs
 
-\section{Complexity}
-The size of the total code base encompass at least 6000 lines of code.
+AH is not required.
+
+\section{HEAP}
+The use of malloc() was a mistake
+
+\section{Future Work and Recommendations}
+\label{sec:fw}
+
+
+\chapter{Conclusion}
 
 
 
-\chapter{Future Work and Recommendations}
-
-\label{cha:fw}
 
 
 \bibliography{refs,simond,rfc}
