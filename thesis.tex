@@ -813,7 +813,7 @@ The responder shares almost all of its code with the initiator.
 
 \chapter{Evaluation}
 \label{cha:eval}
-The software was evaluated using the Cooja emulator as stated in \prettyref{sec:finaldev}. The emulated mote (MSP430x) features a 16 bit CPU with 20 bit memory instructions and runs at 16 MHz. There is 16 kB RAM and 128 kB of flash (for storing program data). Usually IoT application like this is evaluated on the Tmote Sky platform, but as I will soon show you, its 16 bit memory space is too limited (keep in mind that the RAM and flash area occupies the same $2^16$ address space).
+The software was evaluated using the Cooja emulator as stated in \prettyref{sec:finaldev}. The emulated mote (Wismote) features a 16 bit CPU with an instruction set (MSP430x) that includes instructions for 20 bit memory operations and runs at 16 MHz. There is 16 kB RAM and 128 kB of flash (for storing program data). Usually IoT application like this is evaluated on the Tmote Sky platform, but as I will soon show you, its 16 bit memory space is too limited (keep in mind that the RAM and flash area occupies the same $2^16$ address space).
 
 The other peer consisted of Cooja's host using the Linux kernel's native IPsec implementation and the Strongswan software suite for providing the IKEv2 services.
 
@@ -926,10 +926,10 @@ This resulted in the following figures for a default Contiki system (i.e. no IPs
 
 \begin{figure}[h]
 \begin{tabular}{c|l|l}
-Configuration  & ROM (text + data)           & RAM (data + BSS)            \\ \hline
-default (Contiki with $\mu$IP6)        & 46.6 kB                     & 9.0 kB                      \\
-NOIKE          & 54.7 ($\Delta8.1$) kB    & 9.4 ($\Delta0.4$) kB     \\
-WITHIKE        & 72.8 ($\Delta26.2$) kB   & 9.6 ($\Delta0.6$) kB
+Configuration                          & ROM (text + data)        & RAM (data + BSS)            \\ \hline
+default (Contiki with $\mu$IP6)        & 46.6 kB                  & 9.0 kB                      \\
+NOIKE                                  & 54.7 ($\Delta8.1$) kB    & 9.4 ($\Delta0.4$) kB        \\
+WITHIKE                                & 72.8 ($\Delta26.2$) kB   & 9.6 ($\Delta0.6$) kB
 \end{tabular}
 \label{tab:rom-ram-eval}
 \caption{ROM and RAM requirements, with size difference relative to the default configuration noted.}
@@ -983,13 +983,14 @@ The maximum extent of the stack during the handshake was found to be 320 Bytes a
 
 \begin{figure}[h]
 \centering
+\label{tab:eval-stack}
 \begin{tabular}{c|l}
 Exchange                      & Maximum extent of stack  \\ \hline
 IKE\_SA\_INIT exchange      & $321$ B                    \\
 IKE\_AUTH exchange          & $203$ B                    \\
 After handshake            & Not applicable
 \end{tabular}
-\caption{Size of the stack at different times during the key exchange.}
+\caption{Maximum extent of the stack at different times during the key exchange.}
 \end{figure}
 
 \section{Heap requirements}
@@ -1000,13 +1001,14 @@ The memory usage was traced by creating a wrapper function around the call to \e
 
 \begin{figure}[h]
 \centering
+\label{tab:eval-heap}
 \begin{tabular}{c|l}
-Exchange                      & Allocated memory on the heap  \\ \hline
-IKE\_SA\_INIT exchange      & 930 B                    \\
-IKE\_AUTH exchange          & 1142 B                    \\
-After handshake            & 402 B
+Exchange                      & Maximum amount of heap memory allocated    \\ \hline
+IKE\_SA\_INIT exchange        & 930 B                                      \\
+IKE\_AUTH exchange            & 1142 B                                     \\
+After handshake               & 402 B
 \end{tabular}
-\caption{Size of the heap at different times during the key exchange.}
+\caption{Maximum size of the heap at different times during the key exchange.}
 \end{figure}
 
 Of the remaining memory, $2 * 106 B$ is used for the SAs\footnote{Keep in mind that IPsec requires one SA for each direction} and 190 B is consumed by the IKE SA. If more SAs are created using this IKE SA, the memory consumption would increase on the order of $2 * 106 B$ per duplex connection.
@@ -1024,9 +1026,9 @@ The CPU time consumed by the IKEv2 service during a key exchange is 10.9 seconds
 \begin{figure}[h]
 \centering
 \begin{tabular}{c|l}                        
-Exchange                   & CPU Time consumed    \\ \hline
-IKE\_SA\_INIT exchange       & 6.91 s               \\
-IKE\_AUTH exchange          & 3.97 s               \\
+Exchange                   & CPU Time consumed     \\ \hline
+IKE\_SA\_INIT exchange     & 6.91 s                \\
+IKE\_AUTH exchange         & 3.97 s                \\
 Total                      & 10.87 s            
 \end{tabular}                                   
 \caption{Time requirements for the different phases of the key exchange.}
@@ -1036,6 +1038,27 @@ The latency / CPU time associated with the NOIKE option was not investigated as 
 
 %* IPsec packet: Energy required for receiving, energy required for transmitting. Roundtrip times. 
 %IPsec packet: See Shahid's paper. Should be very similar. CC2420 crypt?
+
+\section{IKEv2 total RAM consumption at different times}
+\label{sec:eval-sum}
+The RAM consumption of the IKEv2 service is changing as the system boots; SAs are established; and the service returns to an idle state. Investigating these figures allows us to understand how much memory that is left for applications at different times.
+
+\begin{figure}[h]
+\centering
+\begin{tabular}{ p{2.25cm} | l | p{2.25cm} | p{2.25cm} | p{2.25cm} }                        
+State                   & $BSS + data$ & Max. extent of stack  & Max. extent of heap   & Total Maximum  \\ \hline
+After boot up           & 9.6 kB       & 0 kB                  & 0 kB                  & 9.6 kB       \\
+IKE\_SA\_INIT exchange  & 9.6 kB       & 321 B                 & 930 B                 & 10.9 kB      \\
+IKE\_AUTH exchange      & 9.6 kB       & 203 B                 & 1142 B                & 11.0 kB      \\
+Est. SA pair and IKE-SA & 9.6 kB       & 0 B                   & 402 B                 & 10.0 kB      \\
+Est. SA pair            & 9.6 kB       & 0 B                   & 212 B                 & 9.9 kB
+\end{tabular}
+\caption{The data in the table is based up the figures presented above. The second column is the size requirement of the image, the second and third is memory used by IKEv2 dynamically, and the fourth is the sum of the memory used by IKEv2 at the current phase. The sums are recomputed from the original, non-rounded, size measurements.}
+%`RAM used' is the sum of the image's \emph{data}- and \emph{BSS}-area and the current size of the \emph{Stack} and \emph{Heap}.}
+\end{figure}
+
+This reveals that the maximum memory usage of the IKEv2 service occurs during IKE\_AUTH exchange and amounts to 11 kB. It should be mentioned that 203 of those bytes is used by the IKEv2 process's stack and are available for use by other processes' stacks, but subtracting the values in the column `Total Maximum' from the total available RAM memory\footnote{Which is 16 kB in the case of the Wismote platform.} gives the maximum amount of memory that other processes safely can use. Finally, another 190 bytes can be freed if the IKE session (IKE SA) is destroyed after creation of the two child SAs. This is currently not done and would require a new set of IKE\_SA\_INIT, IKE\_AUTH exchanges if the negotiation of new SAs would be required.  
+
 
 \section{Complexity}
 The size of the total code base encompass at least X lines of code, whereof X-N lines are of my work.
@@ -1048,19 +1071,34 @@ In this chapter I will discuss the results described above, the methodologies us
 \section{Evaluation method}
 In addition to demonstrating the usability of the implementation (i.e management of SAs), the the primary concern of the evaluation was measuring ROM and RAM consumption as well as CPU requirements (i.e. latency).
 
+\subsection{IPsec}
 The evaluation demonstrated the automatic negotiation of SAs, a test which also covered the basic working of the SAD, the SPD and the rest of the IPsec system. The author believes that these result are easy to reproduce in other conditions with different network configurations and Contiki applications of different communication patterns. This is especially true of the IPsec system which encompass header generation and parsing (the uIP6 implementation), the SPD and the SAD, where the implementation should be complete and therefore have a high degree of interoperability.
 
+\subsection{IKEv2}
 The evaluation of the IKEv2 system only covered portions of what the standards documents considers mandatory for an implementation. The reason for this is twofold: the minimalistic implementation (i.e. lack of features to be tested) and the time required for configuring, testing and writing more test. The biggest downfall of this was the lack of testing of the traffic selector negotiation, whose algorithm is a simplification of that described in the standards documents. The author is not sure how it will function when negotiating other SPD offers\footnote{Please remember that the SPD offer for different SPD policies is configured by the peer's administrator.} with peers running other IKEv2 implementations than Strongswan.
 
-The evaluation of the image's ROM and RAM usage was straightforward and the numbers should be correct, caveat the following: the test application's (the UDP message `bouncer') was included in all images of table \cite{tab:rom-ram-eval}; no status, nor any error message strings were included in the binary, making in-field diagnostics difficult.
+\subsection{ROM and RAM measurement}
+The evaluation of the image's ROM and RAM usage was straightforward and the numbers should be correct, caveat the following: the test application's (the UDP message `bouncer') was included in all images of table \prettyref{tab:rom-ram-eval}; no status, nor any error message strings were included in the binary, making in-field diagnostics difficult.
 
-Stack and heap measurement figures should be correct to the byte by virtue of the evaluation techniques described in \cite{cha:eval}.
+Stack and heap measurement figures should be correct to the byte by virtue of the evaluation techniques described in \prettyref{cha:eval}.
 
+\subsection{Time}
 Time / latency testing was only performed on the Wismote platform as it was, arguably, the weakest platform that could comfortably accommodate the software. The rationale of that choice is that by ascertaining the functionality of the software on a simple platform, it can be assumed that it will work better on more powerful ones.
 
-\section{Evaluation results}
+% Diskutera mina resultat: Styrkor och svagheter i vad gäller undersökningsmetodiken
 
-Diskutera mina resultat: Styrkor och svagheter i vad gäller undersökningsmetodiken såväl som resultatet.
+\section{Evaluation results}
+Previous publications\cite{raza11securing} have shown that IPsec is feasible on Contiki. In \prettyref{cha:eval} of this thesis I show that IPsec with IKEv2 for automated SA management is feasible, at least on the coming generation of 32 bit hardware. In this section I will present my reasoning by discussing the software's performance on the current Wismote platform and improvements to be expected on a future platforms.
+
+With the purpose of making the discussion clearer I have elected to discuss future hardware in terms of a reference platform of my choice, STM32W from STMicroelectronics, which Contiki has been ported to. It's an ARM Cortex M3 based platform featuring an embedded IEEE 802.15.4 radio, up to 16 kB and 256 kB of RAM and flash memory (ROM), respectively. There are many reasons to expect hardware like this to become the mainstay of IoT nodes in the near future, but the chief one is that these chips are becoming more power-efficient\cite{a-time-that-has-comeFIX} (in per-instruction power cost as well as in sleep-mode) than the (in the world of IoT) hitherto incumbent line of 8- and 16-bit MCUs.
+
+The feasibility of IPsec/IKEv2 (or any other network protocol for that matter) on Contiki can be divided into two parts: required composed of two aspects, one soft and one hard. The hard aspect is that the ROM and RAM requirements of the protocol's implementation must be sufficiently low so that enough resources is left for the application. This is not a problem on the Wismote platform, which has  6 kB of RAM and 55 kB of ROM to spare after the IPsec/IKEv2 system has established an SA pair (see \prettyref{sec:eval-sum}). On the future reference platform, these margins will become even more plentiful.
+
+Knowing that the software can be executed on the given hardware, we can focus on `softer' aspects such as delays and energy usage. As
+
+The memory figures and processing speed will be on a 32 bit CPU; plenty enough.
+
+Diskutera mina resultat: Styrkor och svagheter i vad gäller resultatet.
 
 Kodningshantverk.
 
@@ -1075,7 +1113,7 @@ Still, the test was rather limited when it  the IKEv2 SA negotiation. There were
 
 which also This also, in turn, demonstrated
 
-
+\section{Criticism of the IPsec standard}
 RPL and IPsec. Can't form a sensible policy when it doesn't know what network it's on.
 
 ESP conformed to Conformance Requirements (ESP RFC). Didn't conform prior to this (??).
@@ -1084,8 +1122,15 @@ Nedlessly complicated: e.g. single duplex SAs
 
 AH is not required.
 
-\section{HEAP}
+http://tools.ietf.org/html/draft-ietf-btns-abstract-api-02
+http://tools.ietf.org/html/rfc5660
+
+\section{Strength and weaknesses of the implementation}
 The use of malloc() was a mistake
+
+ECC patent problem
+
+Point compression
 
 \section{Future Work and Recommendations}
 \label{sec:fw}
