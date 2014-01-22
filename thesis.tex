@@ -811,8 +811,15 @@ The responder shares almost all of its code with the initiator.
 \end{figure}
 
 
-\section{Support libraries}
-ContikiECC. hmac-sha1.
+\section{Supporting libraries}
+The suite makes use of several cryptographic algorithms e.g. SHA1, HMAC, AES, etc. This functionality is provided to the software suite in the shape of libraries provided by other authors. These are written with the explicit purpose of being performance-efficient and are therefore well suited to this project. Here follows a list of the libraries used and their contribution to the suite:
+
+\paragraph{ContikiECC} is my port of TinyECC, a library for asymmetric encryption using elliptic curves (ECC) originally created for TinyOS. It contains a multiple precision arithmetic library upon which elliptic curve encryption functions are implemented. These are used by IKEv2's Diffie-Hellman key exchange. Support for ECC-based Digital Signatures, which can be used for X.509 certificates, is also implemented, but is not used by the IKEv2 service.
+
+\paragraph{The AES encryption standard} is implemented in software. Previous IPsec implementations\cite{raza11securing} have made use of hardware implementations, but this was not possible as the radio module that provided the functionality in question was not part of the chosen development platform (Wismote, see \prettyref{cha:eval}). The library in question is a part of the popular MIRACL SDK.
+
+\paragraph{The HMAC-SHA1-96 standard} as defined in RFC 2104\cite{rfc2104}, is used by IPsec as an integrity/authentication mechanism (see RFC 2404\cite{rfc2404}), and by IKEv2. The HMAC implementation is also a part of the MIRACL SDK, but I altered it in such a way that it could utilize ContikiECC's SHA1 implementation.
+
 
 \chapter{Evaluation}
 \label{cha:eval}
@@ -821,7 +828,7 @@ The software was evaluated using the Cooja emulator as stated in \prettyref{sec:
 The other peer consisted of Cooja's host using the Linux kernel's native IPsec implementation and the Strongswan software suite for providing the IKEv2 services.
 
 \section{IPsec implementation coverage}
-The IPsec part of this implementation should be, to the best of the author's knowledge, compliant with all relevant standards with the exception of certain features (see \ref{ipsec-features-not-imp}).
+The IPsec part of this implementation should be, to the best of the author's knowledge, compliant with all relevant standards with the exception of certain features (see \prettyref{sec:ipsec-features-not-imp}).
 
 \subsection{Major features implemented}
 \begin{itemize}
@@ -843,7 +850,7 @@ The IPsec part of this implementation should be, to the best of the author's kno
 \end{itemize}
 
 \subsection{Major features not implemented}
-\label{ipsec-features-not-imp}
+\label{sec:ipsec-features-not-imp}
 \begin{itemize}
         \item The AH header
         \item IPsec Tunnel mode
@@ -1063,22 +1070,24 @@ Est. SA pair            & 9.6 kB       & 0 B                   & 212 B          
 This reveals that the maximum memory usage of the IKEv2 service occurs during IKE\_AUTH exchange and amounts to 11 kB. It should be mentioned that 203 of those bytes is used by the IKEv2 process's stack and are available for use by other processes' stacks, but subtracting the values in the column `Total Maximum' from the total available RAM memory\footnote{Which is 16 kB in the case of the Wismote platform.} gives the maximum amount of memory that other processes safely can use. Finally, another 190 bytes can be freed if the IKE session (IKE SA) is destroyed after creation of the two child SAs. This is currently not done and would require a new set of IKE\_SA\_INIT, IKE\_AUTH exchanges if the negotiation of new SAs would be required.  
 
 
-\section{Source Code Complexity}
+\section{Source code complexity}
 A common way of measuring source code complexity is by the number of lines of source code (commonly abbreviated as SLOC). Counting the number of of lines of code; including comments, but excluding blank lines; the full software suite (IPsec + IKEv2) encompass $11 764$ lines of C source code. If comments are excluded, the number of lines becomes $5 985$.
 
-Of those $11 764$ lines, $3 801$ lines (code as well as comments) are consumed by the support library ContikiECC (asymmetric encryption) and the HMAC implementation. The various IPsec transforms (AES-CTR etc) and the supporting AES implementation are not included in this figure.
+Of those $11 764$ lines, $3 801$ lines (code as well as comments) are consumed by the support library ContikiECC (unused elliptic curves and features are not included in the figure) and the HMAC implementation. The various IPsec transforms (AES-CTR etc) and the supporting AES implementation are not included in this figure.
 
 Out of the total $11 764$ lines, $7 109$ lines (approximately $3 200$ lines if excluding comments) is the exclusive work of the author. In addition to this, my work also consisted of: adaption of TinyECC (written for TinyOS originally) for Contiki, forming what I named `ContikiECC'; key parts of the HMAC-SHA1-96 implementation was changed in such a way that it could make use of ContikiECC's SHA1-implementation in order to save memory; the implementation of IPsec's transforms were re-written in a number of ways in order to interface with the rest of the IPsec stack and improve clarity.
+
+
 
 
 \chapter{Discussion}
 In this chapter I will discuss the results described above and the methodologies used in gathering them.
 
 \section{Evaluation method}
-In addition to demonstrating the usability of the implementation (i.e management of SAs), the the primary concern of the evaluation was measuring ROM and RAM consumption as well as CPU requirements (i.e. latency).
+In addition to demonstrating the usability of the implementation (i.e management of SAs), the primary concern of the evaluation was measuring ROM and RAM consumption as well as CPU requirements (i.e. latency).
 
 \subsection{IPsec}
-The evaluation demonstrated the automatic negotiation of SAs, a test which also covered the basic working of the SAD, the SPD and the rest of the IPsec system. The author believes that these result are easy to reproduce in other conditions with different network configurations and Contiki applications of different communication patterns. This is especially true of the IPsec system which encompass header generation and parsing (the uIP6 implementation), the SPD and the SAD, where the implementation should be complete and therefore have a high degree of interoperability.
+The evaluation demonstrated the automatic negotiation of SAs, a test which also covered the basic working of the SAD, the SPD and the rest of the IPsec system. The author believes that these result are easy to reproduce in other conditions with different network configurations and Contiki applications of different communication patterns. This is especially true of the IPsec system which encompass header generation and parsing (the $\mu$IP6 implementation), the SPD and the SAD, where the implementation should be complete and therefore have a high degree of interoperability.
 
 \subsection{IKEv2}
 The evaluation of the IKEv2 system only covered portions of what the standards documents considers mandatory for an implementation. The reason for this is twofold: the minimalistic implementation (i.e. lack of features to be tested) and the time required for configuring, testing and writing more test. The biggest downfall of this was the lack of testing of the traffic selector negotiation, whose algorithm is a simplification of that described in the standards documents. The author is not sure how it will function when negotiating other SPD offers\footnote{Please remember that the SPD offer for different SPD policies is configured by the peer's administrator.} with peers running other IKEv2 implementations than Strongswan.
