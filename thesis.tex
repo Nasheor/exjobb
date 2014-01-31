@@ -896,6 +896,7 @@ The established state machine was not implemented because of time constraints, b
 
 
 \section{Test setup}
+\label{sec:test-setup}
 The software can be configured to be built with different feature sets so that the developer can reduce the resource requirement. This gives rise to a large number of feature-sets that can be evaluated. In order to reduce the size of the investigation to manageable proportions, I have elected to limit myself to the two most important configurations:
 
 \begin{itemize}
@@ -905,7 +906,7 @@ The software can be configured to be built with different feature sets so that t
 
 NOIKE's SAs were configured to use AES-XCBC-MAC-96\cite{rfc3566} for integrity / authentication and AES-CTR\cite{rfc3686} for confidentiality. The key length of the latter was 128 bits.
 
-The IKEv2 offer of the WITHIKE system was set up in such a way that it and its peer negotiated SAs of the same configuration as that of the NOIKE system. The handshake was triggered by the PC by attempting to transmit a UDP packet (using the \emph{nc} utility) from the PC to the mote using a port that was configured for protection. That caused Strongswan's \emph{charon} demon initiated a key exchange with the mote's IKEv2 service (making use of the IKEv2 service's responder state machine). The key exchange used $192$ bit ECC keys (the curve is named secp192r1 as described in `Additional Diffie-Hellman Groups for Use with IETF Standards' in RFC 5114\cite{rfc5114}). A shared secret was used for authentication as this is the only type of authentication implemented in the service as of today.
+The IKEv2 offer of the WITHIKE system was set up in such a way that it and its peer negotiated SAs of the same configuration as that of the NOIKE system. The handshake was triggered by the PC by attempting to transmit a UDP packet (using the \emph{nc} utility) from the PC to the mote using a port that was configured for protection. That caused Strongswan's \emph{charon} demon initiated a key exchange with the mote's IKEv2 service (making use of the IKEv2 service's responder state machine). The key exchange used $192$ bit ECC keys (the curve is named secp192r1 as described in `Additional Diffie-Hellman Groups for Use with IETF Standards' in RFC 5114\citep[p.5]{rfc5114}). Its security level is deemed to be comparable to that of a symmetric encryption scheme with a key length of 80 bits\citep[p.11]{rfc5114}. A shared secret was used for authentication as this is the only type of authentication implemented in the service as of today.
 
 \section{ROM and RAM requirements}
 \label{imagecomp}
@@ -1044,6 +1045,7 @@ Total                      & 10.87 s
 \caption{Time requirements for the different phases of the key exchange.}
 \end{figure}
 
+\label{sec:latency-similar}
 The latency / CPU time associated with the NOIKE option was not investigated as the bulk of its execution time is spent in code  that is virtually the same as the one found in \cite{raza11securing} (the code in question concerns cryptographic operations). The paper in question features a number of investigations covering latency and energy usage of the code concerned.
 
 %* IPsec packet: Energy required for receiving, energy required for transmitting. Roundtrip times. 
@@ -1093,40 +1095,79 @@ The evaluation demonstrated the automatic negotiation of SAs, a test which also 
 The evaluation of the IKEv2 system only covered portions of what the standards documents considers mandatory for an implementation. The reason for this is twofold: the minimalistic implementation (i.e. lack of features to be tested) and the time required for configuring, testing and writing more test. The biggest downfall of this was the lack of testing of the traffic selector negotiation, whose algorithm is a simplification of that described in the standards documents. The author is not sure how it will function when negotiating other SPD offers\footnote{Please remember that the SPD offer for different SPD policies is configured by the peer's administrator.} with peers running other IKEv2 implementations than Strongswan.
 
 \subsection{ROM and RAM measurement}
-The evaluation of the image's ROM and RAM usage was straightforward and the numbers should be correct, caveat the following: the test application's (the UDP message `bouncer') was included in all images of table \prettyref{tab:rom-ram-eval}; no status, nor any error message strings were included in the binary, making in-field diagnostics difficult.
+The evaluation of the image's ROM and RAM usage was straightforward and the numbers should be correct, caveat the following: the test application's (the UDP message `bouncer') was included in all images of \prettyref{tab:rom-ram-eval}; no status, nor any error message strings were included in the binary, making in-field diagnostics difficult.
 
 Stack and heap measurement figures should be correct to the byte by virtue of the evaluation techniques described in \prettyref{cha:eval}.
 
 \subsection{Time}
-Time / latency testing was only performed on the Wismote platform as it was, arguably, the weakest platform that could comfortably accommodate the software. The rationale of that choice is that by ascertaining the functionality of the software on a simple platform, it can be assumed that it will work better on more powerful ones.
+Time / latency testing was only performed on the Wismote platform as it was, arguably, the weakest platform that could comfortably accommodate the software. The rationale of that decision is that by ascertaining the functionality of the software on a simple platform, it can be assumed that it will work better on more powerful ones.
+
+The time required for an IKEv2 handshake is heavily dependent upon the key length of the asymmetric key as it's completely dominated (more than 80\%) by ContikiECC's large-number integer arithmetic.
 
 % Diskutera mina resultat: Styrkor och svagheter i vad gäller undersökningsmetodiken
 
 \section{Evaluation results}
-Previous publications\cite{raza11securing} have shown that IPsec is feasible on Contiki. In \prettyref{cha:eval} of this thesis I show that IPsec with IKEv2 for automated SA management is feasible, at least on the coming generation of 32 bit hardware. In this section I will present my reasoning by discussing the software's performance on the current Wismote platform and improvements to be expected on a future platforms.
+Previous publications\cite{raza11securing} have shown that IPsec is feasible on Contiki. In \prettyref{cha:eval} of this thesis I show that IPsec with IKEv2 for automated SA management is feasible, at least on the coming generation of 32 bit hardware. In \emph{this section} I will present the reasoning behind the statement by discussing the software's performance on the current Wismote platform and improvements to be expected on future platforms.
 
-With the purpose of making the discussion clearer I have elected to discuss future hardware in terms of a reference platform of my choice, STM32W from STMicroelectronics, which Contiki has been ported to. It's an ARM Cortex M3 based platform featuring an embedded IEEE 802.15.4 radio, up to 16 kB and 256 kB of RAM and flash memory (ROM), respectively. There are many reasons to expect hardware like this to become the mainstay of IoT nodes in the near future, but the chief one is that these chips are becoming more power-efficient\cite{a-time-that-has-comeFIX} (in per-instruction power cost as well as in sleep-mode) than the (in the world of IoT) hitherto incumbent line of 8- and 16-bit MCUs.
+With the purpose of making the discussion clearer I have elected to discuss future hardware in terms of a reference platform of my choice, namely STM32W from STMicroelectronics, which Contiki has been ported to. It's an ARM Cortex M3 based platform featuring an embedded IEEE 802.15.4 radio, up to 16 kB and 256 kB of RAM and flash memory (ROM), respectively. There are many reasons to expect hardware like this to become the mainstay of IoT nodes in the near future, but the chief one is that these chips are becoming more power-efficient\cite{a-time-that-has-comeFIX} (in per-instruction as well as in sleep-mode power consumption) than the (in the world of IoT) hitherto incumbent line of 8- and 16-bit MCUs.
 
-The feasibility of IPsec/IKEv2 (or any other network protocol for that matter) on Contiki can be divided into two parts: required composed of two aspects, one soft and one hard. The hard aspect is that the ROM and RAM requirements of the protocol's implementation must be sufficiently low so that enough resources is left for the application. This is not a problem on the Wismote platform, which has  6 kB of RAM and 55 kB of ROM to spare after the IPsec/IKEv2 system has established an SA pair (see \prettyref{sec:eval-sum}). On the future reference platform, these margins will become even more plentiful.
+The investigation of the feasibility of IPsec/IKEv2 (or any other network protocol for that matter) on Contiki begins by determining the ROM and RAM requirements of the protocol's implementation. Subsequently, it must be asserted that there is enough resources left for the typical application using the service. This is not a problem on the Wismote platform, which has 6 kB of RAM and 55 kB of ROM to spare after the IPsec/IKEv2 system has established an SA pair (see \prettyref{sec:eval-sum}). On the future reference platform, these margins will become plentiful.
 
-Knowing that the software can be executed on the given hardware, we can focus on `softer' aspects such as delays and energy usage. As
+However, feasibility is not achieved by simply fulfilling the memory requirements. It must be \emph{usable} as well i.e. operate in its environment completing its intended functionality. For IPsec/IKEv2 this translates into the following criteria: are the \emph{communication delays} with other peers tolerable (IKEv2); \emph{energy usage} (both); can the \emph{interoperability}\footnote{In this context, interoperability is defined as the ability to communicate with other peers.} be deemed passable? I will herein only discuss IPsec in the context of interoperability, as the other aspects have been conclusively covered in \cite{raza11securing}, which features a very similar implementation (discussed in \prettyref{sec:latency-similar}).
 
-The memory figures and processing speed will be on a 32 bit CPU; plenty enough.
+\paragraph{Interoperability} is perhaps the hardest problem to tackle. Beginning with IPsec: interoperability should be good enough for communication with any system, with the exception of those that 1) have specific requirements concerning cryptographic standards 2) requires IPsec tunnel mode. I can see no reason as to why such requirements should be anything other than exceptions.
 
-Diskutera mina resultat: Styrkor och svagheter i vad gäller resultatet.
+The IKEv2 service requires, just like the IPsec system, that the peer that it's talking to is configured to only use the features and configuration sets that it understands. I do not anticipate this to be a problem when the peer can be configured for the Contiki system's needs, but if this is not possible, the results are uncertain. Hence, I am of the opinion that the IKEv2 service is usable if the peers' administrators are willing to adapt the configuration to the needs of Contiki.
 
-Kodningshantverk.
+(At this point I would like to remind the reader that the aspect of administrative intervention which the previous subject touches upon is applicable to IKEv2 as well as IPsec, while the opposite, the case of non-intervention on the behalf of a human, is not applicable to IPsec as that always requires human action for setup.)
 
-Is the software too big? RAM requirements? Space left over for userland apps?
+% In order to make the IKEv2 
+% IKEv2's interoperability is not certain, as its functions has not been evaluated any further than the test described in \prettyref{sec:test-setup}. 
 
-\section{Implementation coverage}
-   
- The part \ref{sec:ike-impl-coverage} provides a short list of the missing components, of which the following are considered mandatory by the standard: Cookies, 
+%Continuing with IKEv2. %FORTSÄTT HÄR
 
-The IPsec system might, like all implemenation, feature
-Still, the test was rather limited when it  the IKEv2 SA negotiation. There were The reason for this was did only cover a subset of traffic pattern routing, 
+\paragraph{The energy usage} of the IKEv2 implementation has not been explored, but can be approximated from the time required for running the computations as those vastly exceeds the energy required for the associated transmissions. The corollary of this is that the question of energy consumption is determined by the algorithm used for the Diffie-Hellman exchange. As discussed in \prettyref{sec:ecc-improvements}, large improvements can be made by employing optimizations.
 
-which also This also, in turn, demonstrated
+\paragraph{Communication delays} (the time required for to setup an SA pair with an hitherto not contacted client) amounts to slightly less than 11 seconds. This is definitely acceptable for most other IKEv2 peers in the sense that the delay won't cause\footnote{As an example, the default timeout for Strongswans IKEv2 daemon \emph{charon} is 120 seconds.} a timeout / retransmission, and is probably also enough for most application's demands given that the SA can be established prior to actual usage. In the future reference platform, the time required by the key exchange will be on the order of four times as fast if we assume a clock speed of 32 MHz. The speedup is a result of not only clock speed, but also of an increase in word length from 16 to 32 bit, which will reduce the multiple precision library's operations by half.
+
+
+% On the current reference platform (Wismote), the time required for a handshake (almost 11 seconds), is not long enough to cause timeout problems with other peers. The time requirements for 
+% 
+% The question of energy consumption was not explored as I didn't find 
+% 
+% Knowing that there is \emph{enough memory to run the suite} begs the question if the IPsec/IKEv2 implementation is \emph{practical} as well. That is, are the delays incurred by negotiation, the configuration 
+% 
+% Knowing that the software can be executed on the given hardware, we can focus on `softer' aspects such as delays and energy usage. As
+% 
+% The memory figures and processing speed will be on a 32 bit CPU; plenty enough.
+% 
+% Diskutera mina resultat: Styrkor och svagheter i vad gäller resultatet.
+% 
+% Kodningshantverk.
+% 
+% Is the software too big? RAM requirements? Space left over for userland apps?
+
+% \section{Implementation coverage}
+%    
+%  The part \ref{sec:ike-impl-coverage} provides a short list of the missing components, of which the following are considered mandatory by the standard: Cookies, 
+% 
+% The IPsec system might, like all implemenation, feature
+% Still, the test was rather limited when it  the IKEv2 SA negotiation. There were The reason for this was did only cover a subset of traffic pattern routing, 
+% 
+% which also This also, in turn, demonstrated
+
+\section{Strength and weaknesses of the implementation}
+The use of malloc() was a mistake
+
+ECC patent problem
+
+
+\subsection{Encryption algorithm improvements}
+\label{sec:ecc-improvements}
+Point compression. Tables etc
+
+\subsection{ECC key length and security}
+
 
 \section{Criticism of the IPsec standard}
 RPL and IPsec. Can't form a sensible policy when it doesn't know what network it's on.
@@ -1140,19 +1181,15 @@ AH is not required.
 http://tools.ietf.org/html/draft-ietf-btns-abstract-api-02
 http://tools.ietf.org/html/rfc5660
 
-\section{Strength and weaknesses of the implementation}
-The use of malloc() was a mistake
+IPsec criticism-paper
 
-ECC patent problem
-
-Point compression
 
 \section{Future Work and Recommendations}
 \label{sec:fw}
 
-
+   
 \chapter{Conclusion}
-
+Is usable now and will become even better with the new reference platform. Still, there's plenty of evidence that IPsec/IKEv2 is not an interesting technology for IoT / Contiki.
 
 
 
