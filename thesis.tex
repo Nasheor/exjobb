@@ -1128,7 +1128,7 @@ The IKEv2 service requires, just like the IPsec system, that the peer that it's 
 
 \paragraph{The energy usage} of the IKEv2 implementation has not been explored, but can be approximated from the time required for running the computations as those vastly exceeds the energy required for the associated transmissions. The corollary of this is that the question of energy consumption is determined by the algorithm used for the Diffie-Hellman exchange. As discussed in \prettyref{sec:ecc-improvements}, large improvements can be made by employing optimizations.
 
-\paragraph{Communication delays} (the time required for to setup an SA pair with an hitherto not contacted client) amounts to slightly less than 11 seconds. This is definitely acceptable for most other IKEv2 peers in the sense that the delay won't cause\footnote{As an example, the default timeout for Strongswans IKEv2 daemon \emph{charon} is 120 seconds.} a timeout / retransmission, and is probably also enough for most application's demands given that the SA can be established prior to actual usage. In the future reference platform, the time required by the key exchange will be on the order of four times as fast if we assume a clock speed of 32 MHz. The speedup is a result of not only clock speed, but also of an increase in word length from 16 to 32 bit, which will reduce the multiple precision library's operations by half.
+\paragraph{Communication delays} (the time required for to setup an SA pair with an hitherto not contacted client) amounts to slightly less than 11 seconds. This is definitely acceptable for most other IKEv2 peers in the sense that the delay won't cause\footnote{As an example, the default timeout for Strongswan's IKEv2 daemon \emph{charon} is 120 seconds.} a timeout / retransmission, and is probably also enough for most application's demands given that the SA can be established prior to actual usage. In the future reference platform, the time required by the key exchange will be on the order of four times as fast if we assume a clock speed of 32 MHz. The speedup is a result of not only clock speed, but also of an increase in word length from 16 to 32 bit, which will reduce the multiple precision library's operations by half.
 
 
 % On the current reference platform (Wismote), the time required for a handshake (almost 11 seconds), is not long enough to cause timeout problems with other peers. The time requirements for 
@@ -1156,15 +1156,25 @@ The IKEv2 service requires, just like the IPsec system, that the peer that it's 
 % 
 % which also This also, in turn, demonstrated
 
-\section{Strength and weaknesses of the implementation}
-The use of malloc() was a mistake
-
-ECC patent problem
-
+% \section{Strength and weaknesses of the implementation}
+% The use of malloc() was a mistake
+% 
+% ECC patent problem
+% 
 
 \subsection{Encryption algorithm improvements}
 \label{sec:ecc-improvements}
+The ECC algorithms along with IKEv2's management of cryptographic material are areas rife with opportunities for improvement. The later algorithm 
 Point compression. Tables etc
+
+Ingen kontakt. Ignorerad. Vad kan man vänta sig? Vilken roll har vi gente varandra? Gå tidigare? Vara med mig själv. Läsa och vänta? Vad ska man göra på promenaden? Varför ser hon inte att jag är nedstämd? Varför frågar hon inte?
+
+Jag är ledsen för att jag blir bortstött och inte får kontakt. Var lite med henne. Dra sen och ta vara på dig själv.
+
+På sikt måste jag tala med henne om den dåliga känslomässiga kontakten.
+
+\cite{Ferguson00acryptographic}
+\cite{liu2008tinyecc}
 
 \subsection{ECC key length and security}
 
