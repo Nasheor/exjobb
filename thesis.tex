@@ -1201,27 +1201,29 @@ The IKEv2 service requires, just like the IPsec system, that the peer that it's 
 % 
 % which also This also, in turn, demonstrated
 
-% \section{Strength and weaknesses of the implementation}
-% The use of malloc() was a mistake
-% 
-% ECC patent problem
-% 
+\section{Strength and weaknesses of the implementation}
+The use of malloc() was a mistake
+
+Re-computation of messages instead of buffering. Costly when the shared key has to be re-computed.
+ 
+ECC patent problem
+
 
 \subsection{Encryption algorithm improvements}
 \label{sec:ecc-improvements}
-The ECC algorithms along with IKEv2's management of cryptographic material are areas rife with opportunities for improvement. The later algorithm 
-Point compression. Tables etc
+The ECC algorithms and IKEv2's management of cryptographic material are areas rife with opportunities for improvement. This section will briefly summarize what can be done to lessen times for handshakes and thus also decrease energy usage.
 
-Ingen kontakt. Ignorerad. Vad kan man vänta sig? Vilken roll har vi gente varandra? Gå tidigare? Vara med mig själv. Läsa och vänta? Vad ska man göra på promenaden? Varför ser hon inte att jag är nedstämd? Varför frågar hon inte?
+\paragraph{TinyECC} features several optimization features which, if employed, drastically reduces the time required for Diffe-Hellman key exchanges and digital signatures\footnote{N.B. Digital signatures, which might be used for IKEv2 authentication, are not used by the implementation presented in this work.}. None of these methods have been ported to ContikiECC due to the time required to do so. They are all described in TinyECC's associated paper\cite{liu2008tinyecc} that features a number of benchmarks which reveal that speedups of over eight times are achievable for DH exchanges\footnote{Based upon the results displayed in figure 3 and figure 6 in \cite{liu2008tinyecc}}. Naturally, these improvements comes at a cost of increased ROM and RAM consumption since code complexity increases and pre-computations upon startup are made in some cases.
 
-Jag är ledsen för att jag blir bortstött och inte får kontakt. Var lite med henne. Dra sen och ta vara på dig själv.
+\paragraph{The first improvement of the IKEv2 service} is the removal of the unnecessary computation of the public key, something which is currently done every time an IKE SA is negotiated.
 
-På sikt måste jag tala med henne om den dåliga känslomässiga kontakten.
+The other possible improvement is the introduction of new ECP groups\footnote{Elliptic Curve groups modulo a Prime} that employs an optimization method called \emph{Point Compression}. This technique exploits the fact that all ECC\footnote{Elliptic Curve Cryptography} keys are two-dimensional points described with two integer coordinates. Given the fact that an ECC key is a point that always rests on a pre-defined curve (as specified by the RFC document defining the ECP group) and the coordinate system is cartesian, the missing coordinate can be trivially deduced by the other peer. This halves the size of the key, resulting in a saving of $2*192$ bits (48 bytes) (in the case of the 192-bit curve as used in this thesis) in message size (receiving the other peer's public key and transmitting one's own).
 
-\cite{Ferguson00acryptographic}
-\cite{liu2008tinyecc}
+
 
 \subsection{ECC key length and security}
+
+\cite{Ferguson00acryptographic}
 
 
 \section{Criticism of the IPsec standard}
