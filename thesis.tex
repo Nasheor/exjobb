@@ -150,7 +150,8 @@ hot and cold mediums
 
 \chapter{Introduction}
 \label{cha:intro}
-The Internet has revolutionized communication. I would like to argue that this happened because it drastically lowered the cost of communication by removing interface barriers, unifying standards and organizations. Internet is cheap while legacy, purpose-made, communication networks are expensive (e.g. consider the PSTN\footnote{Public Switched Telephone Network; the ordinary telephone network}). These lowered costs allowed people to send and receive information at an enormous rate, creating new types of medias and services such as the blog, the social network, the search engine etc. Because of these benefits, we try to expand the Internet, and now strides are being made to connect the objects that we surround ourselves with, creating what's commonly called he `Internet of Things' (abbreviated as IoT). It's a vision of an extended Internet where household objects (radiators, lighting etc), sensors and actuators in industrial machinery, cars etc are put `online'. Data is primarily sent and received by radio as cables are expensive to install and maintain.
+% FIX: Läs igenom introt och snygga till språket
+The Internet has revolutionized communication. I would argue that this came about because it drastically lowered the cost of communication by removing interface barriers, unifying standards and organizations. Internet is cheap while legacy, purpose-made, communication networks are expensive (e.g. consider the PSTN\footnote{Public Switched Telephone Network; the ordinary telephone network}). These lowered costs allowed people to send and receive information at an enormous rate, creating new types of medias and services such as the blog, the social network, the search engine etc. Because of these benefits, we try to expand the Internet, and now strides are being made to connect the objects that we surround ourselves with, creating what's commonly called he `Internet of Things' (abbreviated as IoT). It's a vision of an extended Internet where household objects (radiators, lighting etc), sensors and actuators in industrial machinery, cars etc are put `online'. Data is primarily sent and received by radio as cables are expensive to install and maintain.
 
 The underlying motivation as to why we want to communicate with things are that they and their surroundings matters to humans. A thing such as freezer can notify building management when its about to break down and notify building management before the food is spoiled. Data from the vibration sensor in the bridge helps the engineer to model its health and plan maintenance. A thing can also help another thing, e.g. the temperature sensor telling the radiator to turn as the temperature is falling.
 
@@ -827,32 +828,58 @@ The IKEv2 implementation supports several concurrent sessions, each modeled as a
    \label{fig:mealydemo}
 \end{figure}
 
-As to begin the explanation, I would like to focus the readers thoughts on the fact that the peers exchange \emph{messages}. Each such \emph{message} is received by ike\_statem\_incoming\_data\_handler() which multiplexes the message on the basis of the unique identifier in the IKE header (the IKE SA's SPI). Each such SPI is associated with an IKE session and a corresponding state machine which represents that session's state.
+As to begin the explanation, I would like to begin by introducing the reader to the terminology used by the standard's document (RFC 5996 \cite{rfc5996}). Therein, IKEv2 hosts are named \emph{peers} and their communications are called \emph{exchanges} consisting of a pair of \emph{messages}. There are four different types of exchanges, here displayed in order of usage during the lifetime of an IKE SA\footnote{An IKEv2 `session' (i.e. connection between two peers) are denoted as the IKE SA, which is the data structure containing the peer's shared cryptographic secrets.}: IKE\_SA\_INIT; IKE\_AUTH; CREATE\_CHILD\_SA; INFORMATIONAL. On the wire, each such message is an UDP datagram that begins the with the \emph{IKE header} and contains one or several \emph{IKE payloads}. 
+
+In the IKEv2 implementation, every \emph{message} is received by ike\_statem\_incoming\_data\_handler() which multiplexes the message on the basis of the unique identifier in the IKE header (the IKE SA's SPI). Each such SPI is associated with an IKE session and a corresponding state machine which represents that session's state. This determines what \emph{message} should go which state machine instance.
 
 In the state machine, each \emph{state} is represented by a function that, on the basis of the message received from the other peer, makes a \emph{decision} of how to act, i.e. what message to send in reply. That message is created and transmitted by its associated \emph{transition}, which itself is implemented as a function which only takes the session structure's pointer as its argument. This is a powerful feature of the implementation because it allows a message to be retransmitted without resorting to buffers storing the last transmitted message. Instead, the transition's function (whose pointer resides in the session struct) is simply run again. This saves several hundred bytes of RAM which otherwise would be required for buffer space. As the reply is received, the corresponding state function (determined by the session's data structure), is called and the process repeats.
 
 The data structures and associated mechanism of the previously mentioned machines are interesting, but because of space constraints, they will not be reprinted here. Instead, the curious reader is directed towards the source code and machine.c and machine.h in particular.
 
-The rest of this section will be devoted to the description of the implementation of the IKEv2 protocol's responder and initiator machines.
+% The rest of this section will be devoted to the description of the implementation of the IKEv2 protocol's responder and initiator machines.
 
 \subsection{Initiator machine}
-The session begins by ... walkthrough
 
-
-\begin{figure}[h!]
+\begin{figure}[h]
    \includegraphics[width=1.0\textwidth]{initiator_mealy}
-   \caption{Initiator machine example}
-   \label{fig:mealydemo}
+   \caption{The IKEv2 initiator's state machine}
+   \label{fig:initator-machine}
 \end{figure}
 
+An instance of the initiator machine is (as displayed in \prettyref{fig:initiator-machine}) is \textbf{started} when an application on the same Contiki host attempts to transmit a packet that matches the \emph{traffic selector} of an SPD rule labeled \emph{PROTECT} that has no matching SA. Now, the IKE session's data structure is setup by ike\_statem\_setup\_initiator\_session(ipsec\_addr\_t *triggering\_pkt\_addr, spd\_entry\_t *commanding\_entry) in machine.c. That data structure consists of two parts: one persistent and one ephemeral. The former contains the IKE SA (parameters, keying material used to derive subsequent child SAs and the IKE SA's authentication / integrity- and encryption keys); the remote peer's IP address; the IKE SPIs\footnote{Security Parameter Index, the IKEv2 session identifier}; data for connection house keeping such as message ID counters and retransmission timer; current state machine transition (i.e. the function that generated the last \emph{message}); target state (i.e. the function that should handle any \emph{responses} received in regard to the sent \emph{request}, or vice versa). The later (ephemeral) data structure stores information that is only of interest during the IKE session's setup: Pointer to the SPD entry that triggered the negotiation; storage for cryptographic nonces; storage for the peer's SA proposals; the private Diffie-Hellman key. Memory for both data structures are allocated with malloc(). In addition to this, the cryptographic nonce and the private key used in the Diffie-Hellman exchange is generated via a pseudo-random function. The reason that the private key is generated now and stored in the ephemeral data structure (to be thrown away after the handshake is complete) is that we lower the memory requirements, while key generation is comparably cheap energy-wise. Needless to say, this `trick' will have to abandoned is X.509 certificates or similar is to be used for authentication as the remote peer in that case expects a \emph{particular} private/public key pair, and not just anything\footnote{N.B. this implementation uses the pre-shared key method (\citep[p.49]{rfc5996}) for authentication.}.
+
+\textbf{The first exchange, of type IKE\_SA\_INIT}, now begins when the state machine leaves the rest state and transmits the first message. The message consists of three payloads: the cryptographic offer for the IKE SA (i.e. suggested suite of integrity / authentication and encryption transforms); the peer's public Diffie-Hellman key; the cryptographic nonce that later one will be used for authentication the peers. It's also at this point that the public key is computed, something which takes considerable time (see \prettyref{cha:eval}).
+
+The state machine is now in state \#2 and \textbf{waits for the peer's reply}, a message containing the very same payloads that we just sent. If the peer accepted our IKE SA offer, the SA payload will now contain the peer's choice of cryptographic transforms, a subset of our previous offer. Likewise, if the peer found our choice of asymmetric algorithm acceptable, the KE payload will contain the peer's public key calculated for the same parameters\footnote{A Diffie-Hellman key exchange's cryptographic transform is determined by its IKE DH group, in IKEv2 parlance.}. Both peers now have a shared Diffie-Hellman secret and can thus form an IKE SA using the secret as the source of keying material. This is done in the following way:
+
+\begin{figure}[h]
+   \begin{verbatim}
+SKEYSEED = prf(Ni | Nr, g^ir) 
+{SK_d | SK_ai | SK_ar | SK_ei | SK_er | SK_pi | SK_pr } =
+   prf+ (SKEYSEED, Ni | Nr | SPIi | SPIr )
+   \end{verbatim}
+   \caption{Deriving keys for the IKE SA and keying material for future Child SAs. $g^{ir}$ is the shared Diffie-Hellman secret. N* strings are the responder's and the initiator's nonce strings; SPI* are the IKE SA's SPIs numbers (used for identification); SK\_a* and SK\_e* is the IKE SAs cryptographic keys; SK\_d is keying material used for future child SAs; SK\_p* is material that will be used for authenticating the peers during the IKE\_AUTH exchange. The PRF+ algorithm is described in RFC 5996 on page 46.}
+\end{figure}
+
+This allows the peers to communicate securely, but only if the risk of a possible man-in-the-middle attack is discounted. This will be remedied in the next exchange, IKE\_AUTH, which will authenticate the peers.
+
+Given that we can parse the peer's message without trouble, \textbf{the state machine transmits the first message of the IKE\_AUTH exchange} by transiting to the next state. This message consists of one `super-payload' which encrypts (using the IKE SA. Diffie-Hellman) and encapsulates
+
+
+
+The session begins by ... walkthrough
+
+initiate! allocate SA space. ephemeral. PRF+ etc
+
+
+
 \subsection{Responder machine}
-The responder shares almost all of its code with the initiator. 
+%The responder shares almost all of its code with the initiator. 
 
-
-\begin{figure}[h!]
+\begin{figure}[h]
    \includegraphics[width=1.0\textwidth]{responder_mealy}
-   \caption{Responder machine example}
-   \label{fig:mealydemo}
+   \caption{The IKEv2 responder's state machine}
+   \label{fig:responder-machine}
 \end{figure}
 
 
@@ -1154,7 +1181,7 @@ The time required for an IKEv2 handshake is heavily dependent upon the key lengt
 \section{Evaluation results}
 Previous publications\cite{raza11securing} have shown that IPsec is feasible on Contiki. In \prettyref{cha:eval} of this thesis I show that IPsec with IKEv2 for automated SA management is feasible, at least on the coming generation of 32 bit hardware. In \emph{this section} I will present the reasoning behind the statement by discussing the software's performance on the current Wismote platform and improvements to be expected on future platforms.
 
-With the purpose of making the discussion clearer I have elected to discuss future hardware in terms of a reference platform of my choice, namely STM32W from STMicroelectronics, which Contiki has been ported to. It's an ARM Cortex M3 based platform featuring an embedded IEEE 802.15.4 radio, up to 16 kB and 256 kB of RAM and flash memory (ROM), respectively. There are many reasons to expect hardware like this to become the mainstay of IoT nodes in the near future, but the chief one is that these chips are becoming more power-efficient\cite{a-time-that-has-comeFIX} (in per-instruction as well as in sleep-mode power consumption) than the (in the world of IoT) hitherto incumbent line of 8- and 16-bit MCUs.
+With the purpose of making the discussion clearer I have elected to discuss future hardware in terms of a reference platform of my choice, namely STM32W from STMicroelectronics, which Contiki has been ported to. It's an ARM Cortex M3 based platform featuring an embedded IEEE 802.15.4 radio, up to 16 kB and 256 kB of RAM and flash memory (ROM), respectively. There are many reasons to expect hardware like this to become the mainstay of IoT nodes in the near future, but the chief one is that these MCUs are becoming more power-efficient\cite{ko2012low} (in per-instruction as well as in sleep-mode power consumption) than the (in the world of IoT) hitherto incumbent line of 8- and 16-bit devices.
 
 The investigation of the feasibility of IPsec/IKEv2 (or any other network protocol for that matter) on Contiki begins by determining the ROM and RAM requirements of the protocol's implementation. Subsequently, it must be asserted that there is enough resources left for the typical application using the service. This is not a problem on the Wismote platform, which has 6 kB of RAM and 55 kB of ROM to spare after the IPsec/IKEv2 system has established an SA pair (see \prettyref{sec:eval-sum}). On the future reference platform, these margins will become plentiful.
 
@@ -1166,10 +1193,10 @@ The IKEv2 service requires, just like the IPsec system, that the peer that it's 
 
 (At this point I would like to remind the reader that the aspect of administrative intervention which the previous subject touches upon is applicable to IKEv2 as well as IPsec, while the opposite, the case of non-intervention on the behalf of a human, is not applicable to IPsec as that always requires human action for setup.)
 
-% In order to make the IKEv2 
-% IKEv2's interoperability is not certain, as its functions has not been evaluated any further than the test described in \prettyref{sec:test-setup}. 
+%% In order to make the IKEv2 
+%% IKEv2's interoperability is not certain, as its functions has not been evaluated any further than the test described in \prettyref{sec:test-setup}. 
 
-%Continuing with IKEv2. %FORTSÄTT HÄR
+%%Continuing with IKEv2. %FORTSÄTT HÄR
 
 \paragraph{The energy usage} of the IKEv2 implementation has not been explored, but can be approximated from the time required for running the computations as those vastly exceeds the energy required for the associated transmissions. The corollary of this is that the question of energy consumption is determined by the algorithm used for the Diffie-Hellman exchange. As discussed in \prettyref{sec:ecc-improvements}, large improvements can be made by employing optimizations.
 
@@ -1202,47 +1229,73 @@ The IKEv2 service requires, just like the IPsec system, that the peer that it's 
 % which also This also, in turn, demonstrated
 
 \section{Strength and weaknesses of the implementation}
-The use of malloc() was a mistake
 
+\subsection{Things implemented}
+PRF+ algorithm etc FIX
+
+%\subsection{Memory management}
+%The question of memory management 
+%The use of malloc() was a mistake
+
+\subsection{Re-transmissions}
+FIX
+In this implementation, I opted to implement message re-transmissions of 
 Re-computation of messages instead of buffering. Costly when the shared key has to be re-computed.
- 
-ECC patent problem
+
 
 
 \subsection{Encryption algorithm improvements}
 \label{sec:ecc-improvements}
 The ECC algorithms and IKEv2's management of cryptographic material are areas rife with opportunities for improvement. This section will briefly summarize what can be done to lessen times for handshakes and thus also decrease energy usage.
 
-\paragraph{TinyECC} features several optimization features which, if employed, drastically reduces the time required for Diffe-Hellman key exchanges and digital signatures\footnote{N.B. Digital signatures, which might be used for IKEv2 authentication, are not used by the implementation presented in this work.}. None of these methods have been ported to ContikiECC due to the time required to do so. They are all described in TinyECC's associated paper\cite{liu2008tinyecc} that features a number of benchmarks which reveal that speedups of over eight times are achievable for DH exchanges\footnote{Based upon the results displayed in figure 3 and figure 6 in \cite{liu2008tinyecc}}. Naturally, these improvements comes at a cost of increased ROM and RAM consumption since code complexity increases and pre-computations upon startup are made in some cases.
+\paragraph{TinyECC features several optimization techniques} which, if employed, would drastically reduces the time required for Diffe-Hellman key exchanges and digital signatures\footnote{N.B. Digital signatures, which might be used for IKEv2 authentication, are not used by the implementation presented in this work.}. None of these methods have been ported to ContikiECC due to the time required to do so. They are all described in TinyECC's associated paper (\cite{liu2008tinyecc}) that features a number of benchmarks which reveal that speedups of over eight times are achievable for DH exchanges\footnote{Based upon the results displayed in figure 3 and figure 6 in \cite{liu2008tinyecc}}. Naturally, these improvements comes at a cost of increased ROM and RAM consumption since code complexity increases and pre-computations upon startup are made in some cases.
 
-\paragraph{The first improvement of the IKEv2 service} is the removal of the unnecessary computation of the public key, something which is currently done every time an IKE SA is negotiated.
+\paragraph{The IKEv2 service's cryptographic management can be improved} in several aspects. One of these is the removal of the unnecessary computation of the public key, something which is currently done every time an IKE SA is negotiated.
 
 The other possible improvement is the introduction of new ECP groups\footnote{Elliptic Curve groups modulo a Prime} that employs an optimization method called \emph{Point Compression}. This technique exploits the fact that all ECC\footnote{Elliptic Curve Cryptography} keys are two-dimensional points described with two integer coordinates. Given the fact that an ECC key is a point that always rests on a pre-defined curve (as specified by the RFC document defining the ECP group) and the coordinate system is cartesian, the missing coordinate can be trivially deduced by the other peer. This halves the size of the key, resulting in a saving of $2*192$ bits (48 bytes) (in the case of the 192-bit curve as used in this thesis) in message size (receiving the other peer's public key and transmitting one's own).
 
+This begs the question: Why has this trivial optimization technique hitherto not been employed? This is widely attributed to the fact that the U.S. company Certicom holds several patents relating to ECC in general and ECC optimization techniques in particular. The point compression method, as described above, is covered by a U.S. patent \cite{agnew2000elliptic}. It can be argued that techniques such as this are trivial and obvious, and would thus render the patent null and void, but there are differing opinions of this in the community (e.g. \cite{bernstein}). I believe that ECC has not been widely adopted as a direct result of this legal limbo.
+
+% Should I include this?
+%
+%\subsection{ECC key length and security}
+%
+%\cite{Ferguson00acryptographic}
 
 
-\subsection{ECC key length and security}
+\section{IPsec and Contiki}
+IPsec is widely criticized for being too complex (e.g. \cite{Ferguson00acryptographic}). Here follows two commonly cited examples of this: the AH protocol, which i elected to remove as I argued that its functionality was already provided by ESP (\prettyref{para:ah-not-impl}); the fact that duplex connections requires two SAs, increasing memory overhead. Naturally, this complexity puts the suitability of the IPsec/IKEv2 suite into question as it increases hardware requirements. Furthermore, the security provided by IPsec will often have to be complemented in the application layer as applications themselves often use other security primitives than than those of IPsec (which discriminates on hosts, transport protocols and the latter's properties such as ports). A good example of this is TLS commonly used by HTTP web services, which allow identification of the user.
 
-\cite{Ferguson00acryptographic}
+This brings us to the next problem, namely that of network topologies and routing. The SPD, in its standard form as per RFC 4301, expects the network environment to be known at the time of SPD configuration, which was the common case of Internet architecture in the mid-90s when the standard was formulated. This presents a problem in environments that requires dynamic routing, such as the mesh networks\footnote{Mesh networks are networks typically composed of several network terminals that communicates wirelessly and doesn't have any preconception of the network's topology. They are said to form mesh networks when they, aided by a routing protocol such as RPL, create ad-hoc routing topologies with the intent of creating reliable network routes.} commonly used by IoT systems. A protocol for forming such a mesh network is the RPL protocol (described in \cite{rfc6550}) which is commonly used by Contiki. As there is often no knowledge of the network topology before RPL's `handshake', the configuration of the SPD has to be postponed until then. This problem can be resolved by dynamically configuring the SPD on the basis of information derived from RPL, but no such scheme has been devised to my knowledge.
+
+One possible solution to these concerns is to allow the application layer to configure SAs by means of `IPsec channels' as described in RFC 5660 \cite{rfc5660}. Leaving some of the policy decisions to the application allows security based upon other primitives than described above, such as user-based ones. Still, such a framework would only increase the complexity of the implementation as it's essentially an extension to IPsec, and not a replacement of any internals.
 
 
-\section{Criticism of the IPsec standard}
-RPL and IPsec. Can't form a sensible policy when it doesn't know what network it's on.
+%In this implementation is has been exemplified by the removal of AH, which I argued was redundant.  
 
-ESP conformed to Conformance Requirements (ESP RFC). Didn't conform prior to this (??).
+%The arguably greatest benefit benefit of IPsec is that it single-handedly provides authentication to IPsec se
 
-Nedlessly complicated: e.g. single duplex SAs
 
-AH is not required.
+%RPL and IPsec. Can't form a sensible policy when it doesn't know what network it's on.
 
-http://tools.ietf.org/html/draft-ietf-btns-abstract-api-02
-http://tools.ietf.org/html/rfc5660
+%ESP conformed to Conformance Requirements (ESP RFC). Didn't conform prior to this (??).
 
-IPsec criticism-paper
+%Needlessly complicated: e.g. single duplex SAs
+
+%AH is not required.
+
+%http://tools.ietf.org/html/draft-ietf-btns-abstract-api-02
+%http://tools.ietf.org/html/rfc5660
+
+%IPsec criticism-paper
 
 
 \section{Future Work and Recommendations}
 \label{sec:fw}
+
+Fix a good source of entropy
+
+Ditch IPsec 
 
    
 \chapter{Conclusion}
@@ -1252,7 +1305,7 @@ Is usable now and will become even better with the new reference platform. Still
 
 
 \bibliography{refs,simond,rfc}
-\bibliographystyle{plain}
+\bibliographystyle{apalike}
 
 \end{document}
 
