@@ -903,7 +903,25 @@ The implementation constructs a set of traffic selectors that are in compliance 
 
 % FIX: Remove Ni from state machine graphics
 
-\textbf{The state machine now expects an IKE\_AUTH reply from the peer.} Just as with the IKE\_SA\_INIT exchange, we expect to see the same payloads in return: 
+\textbf{The state machine now expects an IKE\_AUTH reply from the peer.} Just as with the IKE\_SA\_INIT exchange, we expect to see the same payloads in return: The peer's ID; peer's authentication data; child SA transform reply; traffic selector reply.
+
+The authentication data is re-computed, but using the peer's values instead, according to the procedure in \prettyref{fig:sign-string} and \prettyref{fig:final-sign}. If the computed value corresponds to that in the received AUTH payload, we can be certain that the peer that we share the IKE SA with is also in possession of the \emph{shared secret} referred to in \prettyref{fig:final.sign}.
+
+With authentication complete, the state machine can now create the child SAs (each being half-duplex with respect to traffic flow). The child SA transform (encryption, intergrity and authentication settings) reply is expected to be a subset of that we sent to the peer, if it found it acceptable. If the transform set is indeed a subset of the offer, the transforms are accepted. The corresponding procedure is carried out for the traffic selector set: the reply is accepted if it's a subset of the offer.
+
+\begin{figure}[h]
+\centering
+\begin{verbatim}
+KEYMAT = prf+(SK_d, Ni | Nr)
+\end{verbatim}
+\label{fig:child-keymat}
+\caption{Creating keying material for the Child SAs.}
+%. Perfect Forward Secrecy is achieved by feeding the material through a HMAC-function (prf+).}
+\end{figure}
+
+The keys for the cryptographic transforms of both Child SAs are taken from the KEYMAT string in the order described on page p.52 of the RFC. The SAs are now inserted into the SAD and the state machine frees up the ephemeral data structures. The IKE SA is retained for future use.
+
+
 
 \subsection{Responder machine}
 %The responder shares almost all of its code with the initiator. 
