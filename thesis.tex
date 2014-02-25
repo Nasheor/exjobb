@@ -5,6 +5,7 @@
 % Längd-infor: N Tsiftes rapports nyttotext är 30 sidor lång (exkl. bibliografi och appendix) och är typsatt i 11 punkter
 
 \usepackage[utf8]{inputenc} 
+\usepackage[T1]{fontenc}
 %\usepackage[swedish]{babel}prettyref
 \usepackage{fancyhdr}
 \usepackage{graphicx}
@@ -828,18 +829,19 @@ The IKEv2 implementation supports several concurrent sessions, each modeled as a
    \label{fig:mealydemo}
 \end{figure}
 
-As to begin the explanation, I would like to begin by introducing the reader to the terminology used by the standard's document (RFC 5996 \cite{rfc5996}). Therein, IKEv2 hosts are named \emph{peers} and their communications are called \emph{exchanges} consisting of a pair of \emph{messages}. There are four different types of exchanges, here displayed in order of usage during the lifetime of an IKE SA\footnote{An IKEv2 `session' (i.e. connection between two peers) are denoted as the IKE SA, which is the data structure containing the peer's shared cryptographic secrets.}: IKE\_SA\_INIT; IKE\_AUTH; CREATE\_CHILD\_SA; INFORMATIONAL. On the wire, each such message is an UDP datagram that begins the with the \emph{IKE header} and contains one or several \emph{IKE payloads}.
+As to begin the explanation, I would like to introduce the reader to the terminology used by the standard's document (RFC 5996 \cite{rfc5996}, hereafter referred to as `the RFC'). Therein, IKEv2 hosts are named \emph{peers} and their communications are called \emph{exchanges} consisting of a pair of \emph{messages}. There are four different types of exchanges, here displayed in order of usage during the lifetime of an IKE SA\footnote{An IKEv2 `session' (i.e. connection between two peers) are denoted as the IKE SA, which is the data structure containing the peer's shared cryptographic secrets.}: IKE\_SA\_INIT; IKE\_AUTH; CREATE\_CHILD\_SA; INFORMATIONAL. On the wire, each such message is an UDP datagram that begins the with the \emph{IKE header} and contains one or several \emph{IKE payloads}.
 
-In the IKEv2 implementation, every \emph{message} is received by ike\_statem\_incoming\_data\_handler() which multiplexes the message on the basis of the unique identifier in the IKE header (the IKE SA's SPI). Each such SPI is associated with an IKE session and a corresponding state machine which represents that session's state. This determines what \emph{message} should go to which state machine instance.
+In the IKEv2 implementation, every \emph{message} is received by ike\_\-statem\_\-incoming\_\-data\_\-handler() which multiplexes the message on the basis of the unique identifier in the IKE header (the IKE SA's SPI). Each such SPI is associated with an IKE session and a corresponding state machine which represents that session's state. This determines what \emph{message} should go to which state machine instance.
 
 In the state machine, each \emph{state} is represented by a function that, on the basis of the message received from the other peer, makes a \emph{decision} of how to act, i.e. what message to send in reply. That message is created and transmitted by its associated \emph{transition}, which itself is implemented as a function which only takes the session structure's pointer as its argument. This is a powerful feature of the implementation because it allows a message to be retransmitted without resorting to buffers storing the last transmitted message. Instead, the transition's function (whose pointer resides in the session struct) is simply run again. This saves several hundred bytes of RAM which otherwise would be required for buffer space. As the reply is received, the corresponding state function (determined by the session's data structure), is called and the process repeats.
 
 The data structures and associated mechanism of the previously mentioned machines are interesting, but because of space constraints, they will not be reprinted here. Instead, the curious reader is directed towards the source code and machine.c and machine.h in particular.
 
 % The rest of this section will be devoted to the description of the implementation of the IKEv2 protocol's responder and initiator machines.
+Finally, before continuing with the description of the initiator machine, i would like to explain the terminology used for string processing. An example of such an operation is VAR = Ni | Nr. Here the variable VAR is assigned the value of the variable Ni concatenated with variable Nr. `N' is in this case an abbreviation of `Nonce' - a variable that exists at both of the peers, albeit with different values. Thus, `Ni' is the nonce of the initiator and `Nr' is the nonce the responder. This notation is commonly used throughout the standards document.
+
 
 \subsection{Initiator machine}
-
 An IKEv2 session is started or \emph{initiated} by one of the peers. The other peer that is contacted by the latter is then considered to be the \emph{responder}. The state machines for the two roles are slightly different, in the sense that the steps in the handshake process comes in a different order, but they are essentially the same and most of the source code are in common. This part describes the initiator machine, but it will allow you to understand the responder as well.
 
 \begin{figure}[h]
@@ -848,7 +850,7 @@ An IKEv2 session is started or \emph{initiated} by one of the peers. The other p
    \label{fig:initiator-machine}
 \end{figure}
 
-An instance of the initiator machine is (as displayed in \prettyref{fig:initiator-machine}) is \textbf{started} when an application on the same Contiki host attempts to transmit a packet that matches the \emph{traffic selector} of an SPD rule labeled \emph{PROTECT} that has no matching SA. Now, the IKE session's data structure is setup by ike\_statem\_setup\_initiator\_session(ipsec\_addr\_t *triggering\_pkt\_addr, spd\_entry\_t *commanding\_entry) in machine.c. That data structure consists of two parts: one persistent and one ephemeral. The former contains the IKE SA (parameters, keying material used to derive subsequent child SAs and the IKE SA's authentication / integrity- and encryption keys); the remote peer's IP address; the IKE SPIs\footnote{Security Parameter Index, the IKEv2 session identifier}; data for connection house keeping such as message ID counters and retransmission timer; current state machine transition (i.e. the function that generated the last \emph{message}); target state (i.e. the function that should handle any \emph{responses} received in regard to the sent \emph{request}, or vice versa). The later (ephemeral) data structure stores information that is only of interest during the IKE session's setup: Pointer to the SPD entry that triggered the negotiation; storage for cryptographic nonces; storage for the peer's SA proposals; the private Diffie-Hellman key. Memory for both data structures are allocated with malloc(). In addition to this, the cryptographic nonce and the private key used in the Diffie-Hellman exchange is generated via a pseudo-random function. The reason that the private key is generated now and stored in the ephemeral data structure (to be thrown away after the handshake is complete) is that we lower the memory requirements, while key generation is comparably cheap energy-wise. Needless to say, this `trick' will have to abandoned is X.509 certificates or similar is to be used for authentication as the remote peer in that case expects a \emph{particular} private/public key pair, and not just anything\footnote{N.B. this implementation uses the pre-shared key method (\citep[p.49]{rfc5996}) for authentication.}.
+An instance of the initiator machine is (as displayed in \prettyref{fig:initiator-machine}) is \textbf{started} when an application on the same Contiki host attempts to transmit a packet that matches the \emph{traffic selector} of an SPD rule labeled \emph{PROTECT} that has no matching SA. Now, the IKE session's data structure is setup by ike\_\-statem\_\-setup\_\-initiator\_\-session(ipsec\_addr\_t *triggering\_pkt\_addr, spd\_entry\_t *commanding\_entry) in machine.c. That data structure consists of two parts: one persistent and one ephemeral. The former contains the IKE SA (parameters, keying material used to derive subsequent child SAs and the IKE SA's authentication / integrity- and encryption keys); the remote peer's IP address; the IKE SPIs\footnote{Security Parameter Index, the IKEv2 session identifier}; data for connection house keeping such as message ID counters and retransmission timer; current state machine transition (i.e. the function that generated the last \emph{message}); target state (i.e. the function that should handle any \emph{responses} received in regard to the sent \emph{request}, or vice versa). The later (ephemeral) data structure stores information that is only of interest during the IKE session's setup: Pointer to the SPD entry that triggered the negotiation; storage for cryptographic nonces; storage for the peer's SA proposals; the private Diffie-Hellman key. Memory for both data structures are allocated with malloc(). In addition to this, the cryptographic nonce and the private key used in the Diffie-Hellman exchange is generated via a pseudo-random function. The reason that the private key is generated now and stored in the ephemeral data structure (to be thrown away after the handshake is complete) is that we lower the memory requirements, while key generation is comparably cheap energy-wise. Needless to say, this `trick' will have to abandoned is X.509 certificates or similar is to be used for authentication as the remote peer in that case expects a \emph{particular} private/public key pair, and not just anything\footnote{N.B. this implementation uses the pre-shared key method (\citep[p.49]{rfc5996}) for authentication.}.
 
 \textbf{The first exchange, of type IKE\_SA\_INIT}, now begins when the state machine leaves the rest state and transmits the first message. The message consists of three payloads: the cryptographic offer for the IKE SA (i.e. suggested suite of integrity / authentication and encryption transforms); the peer's public Diffie-Hellman key; the cryptographic nonce that later one will be used for authentication the peers. It's also at this point that the public key is computed, something which takes considerable time (see \prettyref{cha:eval}).
 
@@ -860,10 +862,25 @@ SKEYSEED = prf(Ni | Nr, g^ir)
 {SK_d | SK_ai | SK_ar | SK_ei | SK_er | SK_pi | SK_pr } =
    prf+ (SKEYSEED, Ni | Nr | SPIi | SPIr )
    \end{verbatim}
-   \caption{Deriving keys for the IKE SA and keying material for future Child SAs. $g^{ir}$ is the shared Diffie-Hellman secret. N* strings are the responder's and the initiator's nonce strings; SPI* are the IKE SA's SPIs numbers (used for identification); SK\_a* and SK\_e* is the IKE SAs cryptographic keys; SK\_d is a string from which keying material can be derived for future child SAs (hence `child' in the sense that it inherits keying material from a parent SA); SK\_p* is material that will be used for authenticating the peers during the IKE\_AUTH exchange. The PRF+ algorithm is described in RFC 5996 on page 46.}
+   \caption{Deriving keys for the IKE SA and keying material for future Child SAs. $g^{ir}$ is the shared Diffie-Hellman secret. N* strings are the responder's and the initiator's nonce strings; SPI* are the IKE SA's SPIs numbers (used for identification); SK\_a* and SK\_e* is the IKE SAs cryptographic keys; SK\_d is a string from which keying material can be derived for future child SAs (hence `child' in the sense that it inherits keying material from a parent SA); SK\_p* is material that will be used for authenticating the peers during the IKE\_AUTH exchange. The functions prf and prf+ are described in \prettyref{fig:prf}.}
 \end{figure}
 
-This allows the peers to communicate securely, but only if the risk of a possible man-in-the-middle attack is discounted. This will be remedied in the next exchange, IKE\_AUTH, which will authenticate the peers.
+
+\begin{figure}[h]
+   \begin{verbatim}
+      prf = HMAC (Key, String) 
+      
+      prf+ (K,S) = T1 | T2 | T3 | T4 | ...
+      T1 = prf (K, S | 0x01)
+      T2 = prf (K, T1 | S | 0x02)
+      T3 = prf (K, T2 | S | 0x03)
+      T4 = prf (K, T3 | S | 0x04)
+   \end{verbatim}
+   \caption[The functions prf and prf+]{The prf function is an HMAC-function and is negotiated during the IKE\_SA\_INIT exchange. This implementation uses HMAC-SHA1 exclusively. The utility of the prf+ function is the ability to generate strings of keying material of any length i.e. regardless of the prf function's output. The prf+ function is defined on p.46 in the RFC.) }
+   \label{fig:prf}
+\end{figure}
+
+The IKE\_SA allows the peers to communicate securely, but only if the risk of a possible man-in-the-middle attack is discounted. This will be remedied in the next exchange, IKE\_AUTH, which will authenticate the peers.
 
 Given that we can parse the peer's message without trouble, \textbf{the state machine transmits the first message of the IKE\_AUTH exchange} by transiting to the next state. This message consists of one encapsulating payload which encrypts the others using the IKE SA. Its structure is almost identical to that of the ESP header, which allowed me to implement the encoding and decoding of these two payloads / headers in the same C-function. The encapsulated payloads are: ID (an e-mail address - one of seven different ID methods); Authentication data (AUTH); an offer of cryptographic transforms for the child SA pair (i.e. the SAs that will be used by IPsec); Notification payload that informs the other peer that only Child SAs for IPsec transport mode are acceptable; Traffic Selectors - one for each direction of the traffic flow that the Child SAs will carry.
 
@@ -881,7 +898,7 @@ RestOfInitIDPayload = IDType | RESERVED | InitIDData
 MACedIDForI = prf(SK_pi, RestOfInitIDPayload)
 \end{verbatim}
 \label{fig:sign-string}
-\caption{The string to be signed is a concatenation of the peer's nonces; previously transmitted messages and more. The prf function is an HMAC-function as negotiated during the IKE\_SA\_INIT exchange. This implementation uses HMAC-SHA1 exclusively. From p.48 RFC 5996.}
+\caption{The string to be signed is a concatenation of the peer's nonces; previously transmitted messages and more.}
 \end{figure}
 
 The fact that the string described in \prettyref{fig:sign-string} includes previously transmitted messages (RealMessage1) incurs an extra memory overhead as the messages needs to be buffered. In this implementation I partly alleviate this problem by only buffering the remote peer's message. The peer's own message is reproduced by simply re-running the transition associated with the message in question.
@@ -919,19 +936,18 @@ KEYMAT = prf+(SK_d, Ni | Nr)
 %. Perfect Forward Secrecy is achieved by feeding the material through a HMAC-function (prf+).}
 \end{figure}
 
-The keys for the cryptographic transforms of both Child SAs are taken from the KEYMAT string in the order described on page p.52 of the RFC. The SAs are now inserted into the SAD and the state machine frees up the ephemeral data structures. The IKE SA is retained for future use.
-
-
+The keys for the cryptographic transforms of both Child SAs are taken from the KEYMAT string in the order described on page p.52 of the RFC. The SAs are now inserted into the SAD and the state machine frees up the ephemeral data structures. The IKE SA is retained for future use, but may be terminated if memory if so wished.
 
 \subsection{Responder machine}
-%The responder shares almost all of its code with the initiator. 
+The responder shares almost all of its code with the initiator. What sets them apart is the order by which strings are concatenated (e.g. consider Ni | Nr) and the structure of the state machine.
+
+ % As the responder The latter has implications for memory management: The responder can always access the initiator's packet in Contiki's IP packet buffer and therefore doesn't need to buffer . where the responder has access to the packet's data just received from the initiator while the latter has to buffer them for computations done at a later stage.
 
 \begin{figure}[h]
    \includegraphics[width=1.0\textwidth]{responder_mealy}
    \caption{The IKEv2 responder's state machine}
    \label{fig:responder-machine}
 \end{figure}
-
 
 \section{Supporting libraries}
 The suite makes use of several cryptographic algorithms e.g. SHA1, HMAC, AES, etc. This functionality is provided to the software suite in the shape of libraries provided by other authors. These are written with the explicit purpose of being performance-efficient and are therefore well suited to this project. Here follows a list of the libraries used and their contribution to the suite:
@@ -1278,20 +1294,19 @@ The IKEv2 service requires, just like the IPsec system, that the peer that it's 
 % 
 % which also This also, in turn, demonstrated
 
-\section{Strength and weaknesses of the implementation}
+%\section{Strength and weaknesses of the implementation}
 
-\subsection{Things implemented}
-PRF+ algorithm etc FIX
+%\subsection{Things implemented}
+%PRF+ algorithm etc FIX
 
 %\subsection{Memory management}
 %The question of memory management 
 %The use of malloc() was a mistake
 
-\subsection{Re-transmissions}
-FIX
-In this implementation, I opted to implement message re-transmissions of 
-Re-computation of messages instead of buffering. Costly when the shared key has to be re-computed.
-
+%\subsection{Re-transmissions}
+%FIX
+%In this implementation, I opted to implement message re-transmissions of 
+%Re-computation of messages instead of buffering. Costly when the shared key has to be re-computed.
 
 
 \subsection{Encryption algorithm improvements}
@@ -1314,50 +1329,39 @@ This begs the question: Why has this trivial optimization technique hitherto not
 
 
 \section{IPsec and Contiki}
-IPsec is widely criticized for being too complex (e.g. \cite{Ferguson00acryptographic}). Here follows two commonly cited examples of this: the AH protocol, which i elected to remove as I argued that its functionality was already provided by ESP (\prettyref{para:ah-not-impl}); the fact that duplex connections requires two SAs, increasing memory overhead. Naturally, this complexity puts the suitability of the IPsec/IKEv2 suite into question as it increases hardware requirements. Furthermore, the security provided by IPsec will often have to be complemented in the application layer as applications themselves often use other security primitives than than those of IPsec (which discriminates on hosts, transport protocols and the latter's properties such as ports). A good example of this is TLS commonly used by HTTP web services, which allow identification of the user.
-
-% FIX: Traffic selectors should be examplified above
+IPsec is widely criticized for being too complex (e.g. \cite{Ferguson00acryptographic}). Here follows two commonly cited examples of this: the AH protocol, which i elected to remove as I argued that its functionality was already provided by ESP (\prettyref{para:ah-not-impl}); the fact that duplex connections requires two SAs, increasing memory overhead; the complexities incurred by using traffic flow as primitives in the security policy\footnote{Good examples of this are found on p. 42 in RFC 5996 which concerns Traffic Selector negotiation and p. 24 in RFC 4301 on the topic of SPD De-correlation.}. Naturally, this complexity puts the suitability of the IPsec/IKEv2 suite into question as it increases hardware requirements. Furthermore, the security provided by IPsec will often have to be complemented in the application layer as applications themselves often use other security primitives than than those of IPsec (which discriminates on hosts, transport protocols and the latter's properties such as ports). A good example of this is TLS commonly used by HTTP web services, which allow identification of the user.
 
 This brings us to the next problem, namely that of network topologies and routing. The SPD, in its standard form as per RFC 4301, expects the network environment to be known at the time of SPD configuration, which was the common case of Internet architecture in the mid-90s when the standard was formulated. This presents a problem in environments that requires dynamic routing, such as the mesh networks\footnote{Mesh networks are networks typically composed of several network terminals that communicates wirelessly and doesn't have any preconception of the network's topology. They are said to form mesh networks when they, aided by a routing protocol such as RPL, create ad-hoc routing topologies with the intent of creating reliable network routes.} commonly used by IoT systems. A protocol for forming such a mesh network is the RPL protocol (described in \cite{rfc6550}) which is commonly used by Contiki. As there is often no knowledge of the network topology before RPL's `handshake', the configuration of the SPD has to be postponed until then. This problem can be resolved by dynamically configuring the SPD on the basis of information derived from RPL, but no such scheme has been devised to my knowledge.
 
 One possible solution to these concerns is to allow the application layer to configure SAs by means of `IPsec channels' as described in RFC 5660 \cite{rfc5660}. Leaving some of the policy decisions to the application allows security based upon other primitives than described above, such as user-based ones. Still, such a framework would only increase the complexity of the implementation as it's essentially an extension to IPsec, and not a replacement of any internals.
 
 
-%In this implementation is has been exemplified by the removal of AH, which I argued was redundant.  
-
 %The arguably greatest benefit benefit of IPsec is that it single-handedly provides authentication to IPsec se
 
 
-%RPL and IPsec. Can't form a sensible policy when it doesn't know what network it's on.
-
 %ESP conformed to Conformance Requirements (ESP RFC). Didn't conform prior to this (??).
 
-%Needlessly complicated: e.g. single duplex SAs
-
-%AH is not required.
 
 %http://tools.ietf.org/html/draft-ietf-btns-abstract-api-02
 %http://tools.ietf.org/html/rfc5660
-
-%IPsec criticism-paper
 
 
 \section{Future Work and Recommendations}
 \label{sec:fw}
 
-Fix a good source of entropy
+A good source of entropy needs to be found and exploited.
 
-Ditch IPsec 
+%Ditch IPsec 
 
    
 \chapter{Conclusion}
-Is usable now and will become even better with the new reference platform. Still, there's plenty of evidence that IPsec/IKEv2 is not an interesting technology for IoT / Contiki.
+%Is usable now and will become even better with the new reference platform. Still, there's plenty of evidence that IPsec/IKEv2 is not an interesting technology for IoT / Contiki.
 
 
 
 
 \bibliography{refs,simond,rfc}
-\bibliographystyle{apalike}
+\bibliographystyle{alpha}
 
 \end{document}
 
