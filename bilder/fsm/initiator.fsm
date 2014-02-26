@@ -1,0 +1,44 @@
+<?xml version='1.0'?>
+<!DOCTYPE qfsmproject SYSTEM 'qfsm.dtd'>
+<qfsmproject version="0.53" author="Qfsm">
+  <machine nummooreout="0" transfontitalic="0" draw_it="0" statefontsize="8" transfont="Helvetica" statefontitalic="0" author="" description="" version="" name="Initiator" arrowtype="1" numbits="2" statefontweight="50" statefont="Helvetica" numin="0" transfontsize="8" transfontweight="50" type="2" numout="0" initialstate="0">
+    <outputnames_moore></outputnames_moore>
+    <inputnames></inputnames>
+    <outputnames></outputnames>
+    <itransition ypos="205" endx="109" xpos="59" endy="129"/>
+    <state pencolor="0" radius="60" description="" finalstate="0" moore_outputs="" ypos="129" code="0" xpos="169" linewidth="1">Waiting for IKE_SA_INIT_REPLY</state>
+    <state pencolor="0" radius="60" description="" finalstate="0" moore_outputs="" ypos="352" code="1" xpos="518" linewidth="1">IKE session established. Waiting for CREATE_CHILD_SA reply</state>
+    <state pencolor="0" radius="40" description="" finalstate="0" moore_outputs="" ypos="99" code="2" xpos="523" linewidth="1">Rest</state>
+    <state pencolor="0" radius="50" description="" finalstate="0" moore_outputs="" ypos="353" code="3" xpos="121" linewidth="1">Child SAs created (Rest)</state>
+    <transition c1x="65.18052561400212" c2y="-25.32878360725273" c1y="29.65625690400574" description="" straight="0" type="2" ypos="76.705467772527" endx="182.1226874150428" xpos="139.5843256220465" endy="70.4526253790396" c2x="224.4052681041022">
+      <from>0</from>
+      <to>0</to>
+      <inputs default="0" any="0" invert="0">Timeout</inputs>
+      <outputs>TX:IKE_SA_INIT(HDR,SAi1,KEi,Ni)</outputs>
+    </transition>
+    <transition c1x="263.2392024850675" c2y="250.9380019885978" c1y="185.3295000313596" description="" straight="0" type="2" ypos="160.6417717066886" endx="494.36484208525" xpos="219.9784099718871" endy="296.8512981989165" c2x="439.667999592168">
+      <from>0</from>
+      <to>1</to>
+      <inputs default="0" any="0" invert="0">RX:IKE_SA_INIT(HDR,SAr1,KEr,Nr,[CERTREQ])</inputs>
+      <outputs>TX:IKE_AUTH(HDR,SK{IDi,AUTH,SAi2,N(USE_TRANSPORT_MODE),TSi,TSr})</outputs>
+    </transition>
+    <transition c1x="381.9236428525796" c2y="281.1312349608067" c1y="281.375759329526" description="" straight="0" type="2" ypos="336.3454584914335" endx="165.7213595499958" xpos="460.0781964183041" endy="330.6393202250021" c2x="258.1404324771885">
+      <from>1</from>
+      <to>3</to>
+      <inputs default="0" any="0" invert="0">RX:IKE_AUTH(HDR,SK{SA,[KEr],[N],TSi,TSr})</inputs>
+      <outputs></outputs>
+    </transition>
+    <transition c1x="481.346694757588" c2y="432.7631414096812" c1y="503.5268608033174" description="" straight="0" type="2" ypos="401.0489459878584" endx="458.142180294621" xpos="483.4427880540089" endy="356.1281254969227" c2x="316.2239718571458">
+      <from>1</from>
+      <to>1</to>
+      <inputs default="0" any="0" invert="0">Timeout</inputs>
+      <outputs>TX:IKE_AUTH(HDR,SK{IDi,AUTH,SAi2,N(USE_TRANSPORT_MODE),TSi,TSr})</outputs>
+    </transition>
+    <transition c1x="412.1001345731309" c2y="59.6721291446629" c1y="17.39504891035148" description="" straight="0" type="2" ypos="68.49963458508833" endx="199.2322615314451" xpos="497.1209020721961" endy="77.17326594609401" c2x="242.5670367609491">
+      <from>2</from>
+      <to>0</to>
+      <inputs default="0" any="0" invert="0"></inputs>
+      <outputs>TX:IKE_SA_INIT(HDR,SAi1,KEi,Ni)</outputs>
+    </transition>
+  </machine>
+</qfsmproject>

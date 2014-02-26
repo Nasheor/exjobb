@@ -1,0 +1,25 @@
+<?xml version='1.0'?>
+<!DOCTYPE qfsmproject SYSTEM 'qfsm.dtd'>
+<qfsmproject version="0.53" author="Qfsm">
+  <machine nummooreout="0" transfontitalic="0" draw_it="0" statefontsize="8" transfont="Helvetica" statefontitalic="0" author="" description="" version="" name="FSM" arrowtype="1" numbits="2" statefontweight="50" statefont="Helvetica" numin="1" transfontsize="8" transfontweight="50" type="0" numout="0" initialstate="0">
+    <outputnames_moore></outputnames_moore>
+    <inputnames>i_0</inputnames>
+    <outputnames></outputnames>
+    <itransition ypos="124.4" endx="50.2" xpos="-4.799999999999997" endy="124.4"/>
+    <state pencolor="0" radius="45" description="" finalstate="0" moore_outputs="" ypos="124.4" code="0" xpos="95.2" linewidth="1">Handle Input</state>
+    <state pencolor="0" radius="45" description="" finalstate="0" moore_outputs="" ypos="122" code="1" xpos="369.2" linewidth="1">Handle Input</state>
+    <state pencolor="0" radius="40" description="" finalstate="0" moore_outputs="" ypos="127.6" code="2" xpos="598.4" linewidth="1">Halt</state>
+    <transition c1x="172.1400651323571" c2y="32.68562274649733" c1y="34.87304612307558" description="Generate packet" straight="0" type="1" ypos="86.89302818711056" endx="335.6943751709079" xpos="120.0641723253986" endy="91.96047429115895" c2x="274.9786437532487">
+      <from>0</from>
+      <to>1</to>
+      <inputs default="0" any="0" invert="0">Generate_Authentication_Reply()</inputs>
+      <outputs></outputs>
+    </transition>
+    <transition c1x="188.9957915910485" c2y="218.801951329542" c1y="207.0517987071437" description="" straight="0" type="1" ypos="155.3602708759587" endx="562.5477524169505" xpos="127.8567240746414" endy="145.3374277516139" c2x="464.3989014831667">
+      <from>0</from>
+      <to>2</to>
+      <inputs default="0" any="0" invert="0">Generate_Termination_Msg()</inputs>
+      <outputs></outputs>
+    </transition>
+  </machine>
+</qfsmproject>
