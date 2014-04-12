@@ -1,5 +1,7 @@
 What is IoT?
 
+[slide]
+
 Problem statement
 
 Research question: Can IPsec and IKEv2 be implemented within the current hardware boundaries while still being interoperable with other Internet hosts?
