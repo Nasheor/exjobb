@@ -22,6 +22,7 @@
 %\usepackage[margin]{fancyref}
 \usepackage{xcolor}
 \usepackage{listings}
+\usepackage{acronym}
 %\usepackage{tikz}
 
 \DeclareGraphicsExtensions{.eps,.pdf,.png,.jpg,.jpeg}
@@ -215,7 +216,7 @@ Can IPsec and IKEv2 be implemented within the current hardware boundaries while 
 Much of the research in IoT is carried out by experiments because of the highly applied nature of the field. Indeed, most of the Internet as-of-today, was constructed on the basis of principles surmised from experiments\footnote{E.g. ARPANET and CYCLADES}. Therefore, I decided to implement the various components that makes up a functional IPsec system and then test them. The tests were carried out by subjecting the system to common communication scenarios with other IPsec-enabled Internet hosts: handshaking a new secure connection; receiving and transmitting packets with various security policies applied; housekeeping of connections. The success or failure of the test is determined if it worked, or if it succeeded, how well it did so. Finally, memory consumption and cpu time is measured for the different tasks. It's the results of these tests that will form the basis of the evaluation of the 1) quality and workmanship of the implementation 2) suitability of IPsec for IoT in general.
 
 \subsection{Development process}
-The source code was managed using the Git source code revision system. Development was organized in such a way that the project was run in one branch\footnote{Git branches are similar in concept to those in other source code control systems, such as Subversion.} (hereafter called \emph{develop}) parallel to Contiki's master branch. Important patches / changes that occurred in Contiki while the development was underway could thus simply be fetched / merged into \emph{develop}. Patches in develop that proved  was then merged in from the FIX
+The source code was managed using the Git source code revision system. Development was organized in such a way that the project was run in one branch\footnote{Git branches are similar in concept to those in other source code control systems, such as Subversion.} (hereafter called \emph{develop}) parallel to Contiki's master branch. Important patches / changes that occurred in Contiki while the development was underway could thus simply be fetched / merged into \emph{develop}. This proved advantageous as it allowed me `upgrade' the underlying Contiki system at will and in a controlled fashion.
 
 \section{Limitations}
 Firstly, the purpose of this work is to answer the questions raised in the problem statement, not to create an implementation that's ready for production use. Thus, parts of the standard that are not necessary to meet this end can be omitted. This also includes parts that are labeled as REQUIRED in the standard documents, as they're only necessary if you strive towards full compliance, which in terms of features arguably is superset of that of interoperability.
@@ -261,8 +262,9 @@ One approach to overcome these drawbacks while still allowing some form of multi
 Contiki took a different route and provided the programmer with a model that resembled the sequential programming style (which is believed to be more comfortable for the majority of developers)\footnote{I found this reasoning to have merit after having participated in a course where application programming for TinyOS as well as Contiki was taught, having observed that the vast majority of his classmates preferred Contiki's Protothreads to TinyOS' nesC.}, but still benefitted from the efficiency of the event driven state machine.
 
 \begin{figure}[h!]
+   \centering
    \includegraphics[width=0.9\textwidth]{dunkels-protothreads-example}
-   \caption{Example code for a radio transmission program utilizing Protothreads. From \citep[p.7]{dunkels2005protothreads}. FIX: Check copyright!}
+   \caption{Example code for a radio transmission program utilizing Protothreads. From \citep[p.7]{dunkels2005protothreads}}
    \label{fig:ptexample}
 \end{figure}
 
@@ -283,27 +285,25 @@ UDP, TCP as well as ICMP over IPv4 and IPv6 are provided by the $\mu$IP stack, d
 
 \begin{figure}
    \centering
-   \begin{minipage}{.5\textwidth}
-      \centering
-      \includegraphics[width=.9\linewidth]{dunkels-uip-main_loop}
-      \caption{$\mu$IP's main control loop. From \citep[p.6]{dunkels2003full}. FIX: Check copyright!}
-      \label{fig:uip-ml}
-   \end{minipage}%
-   \begin{minipage}{.5\textwidth}
-      \centering
-      \includegraphics[width=.9\linewidth]{dunkels-uip-and-lwip}
-      \caption{Features of $\mu$IP and the now no longer maintained lwIP. Since the table was published in \citep[p.4]{dunkels2003full} UDP has been added as well to $\mu$IP.}
-      \label{fig:uip-features}
-   \end{minipage}
+   \includegraphics[width=.9\linewidth]{dunkels-uip-main_loop}
+   \caption{$\mu$IP's main control loop. From \citep[p.6]{dunkels2003full}}
+   \label{fig:uip-ml}
+\end{figure}
+
+\begin{figure}
+   \centering
+   \includegraphics[width=.9\linewidth]{dunkels-uip-and-lwip}
+   \caption{Features of $\mu$IP and the now no longer maintained lwIP. Since the table was published in \citep[p.4]{dunkels2003full} UDP has been added as well to $\mu$IP.}
+   \label{fig:uip-features}
 \end{figure}
 
 One important reason as to why $\mu$IP can achieve such a low memory footprint is that is liberates the OS from the complicated transmission of data between application and IP stack. Most of the requirements associated with this interface, as described in the RFC, are waived in \citep[p.4]{dunkels2003full}. This not only removes the need for a lot of software logic, but also allows a drastic simplification of transmission buffer management, something which its designer have used to the fullest extent: there is only enough buffer space for one packet at any time, including the need of transmissions as well as receptions. Figure \ref{fig:uip-ml} describes the main loop of $\mu$IP which explains its buffer management. The application that wish to transmit data copies it into $\mu$IP's buffer and then calls the transmission function with the appropriate addressing information. Upon reception, the procedure is the opposite. The stack figures out which application is interested in the arrived piece of data, then calls its handler, which in turn is programmed to react on the data and to produce a reply, which in turn is written to the very same buffer and so on.
 
 Even though an IP packet can be well over a kilobyte in size (the MTU\footnote{Maximum Transmission Unit: The largest size of a packet that a network or a host can handle.} of IPv6 is 1280 bytes), the buffer can still be much smaller than this if used in conjunction with a MAC\footnote{Media Access Control} layer that has a small MTU (6lowPAN (using IEEE 802.15.4 in turn) is very popular for Contiki and has a MAC MTU of at most 102 bytes\citep[section 4]{rfc4944}). This will allow the incoming IP-packet fragments to be spoon-fed to the receiving application, negating the need for a large buffer for transmission purposes. Buffer size then becomes a problem of how large IP-packets one wants the applications to transmit.
-% FIX: Above paragraph is poorly worded. The buffer must be as large as the largest expected IP packet.
+% FIX (ignored): Above paragraph is poorly worded. The buffer must be as large as the largest expected IP packet.
 
 \section{Security of the Internet Protocol}
-\paragraph{Security on the Internet} was, and is, as of today an unresolved issue in my opinion. As its protocol, IP, was originally designed and developed in the open world of academic computer science, no security considerations were made. Instead, the three properties of information security (confidentiality, authenticity, integrity) \citep[section 8.1]{vasseur10interconnecting} were provided by physically protecting the network's hardware and the imposition of social norms among its users and operators. As the Internet grew, this and other weaknesses started to become problems. In 1995, the IETF\footnote{The Internet Engineering Task Force is the governing body of the development of Internet standards.} released a number of documents starting with RFC\footnote{RFC, or Request For Comment, is the collective name of the IETF's standards} 1883\cite{rfc1883} that defined IPv6, the planned successor of IPv4. Since security had become a concern at the time of its design, provisions for secure communication was included, and this part of the IPv6 standard was named IPsec\footnote{I should be noted that with RFC 6434\cite{rfc6434} in late 2011, the requirement that all IPv6-compliant hosts must feature IPsec functionality was dropped.}. This provided the network layer (the layer which IP operates on) and everything above it with secure communication.
+\paragraph{Security on the Internet} was, and is, as of today an unresolved issue in my opinion. As its protocol, IP, was originally designed and developed in the open world of academic computer science, no security considerations were made. Instead, the three properties of information security (confidentiality, authentic ity, integrity) \citep[section 8.1]{vasseur10interconnecting} were provided by physically protecting the network's hardware and the imposition of social norms among its users and operators. As the Internet grew, this and other weaknesses started to become problems. In 1995, the IETF\footnote{The Internet Engineering Task Force is the governing body of the development of Internet standards.} released a number of documents starting with RFC\footnote{RFC, or Request For Comment, is the collective name of the IETF's standards} 1883\cite{rfc1883} that defined IPv6, the planned successor of IPv4. Since security had become a concern at the time of its design, provisions for secure communication was included, and this part of the IPv6 standard was named IPsec\footnote{I should be noted that with RFC 6434\cite{rfc6434} in late 2011, the requirement that all IPv6-compliant hosts must feature IPsec functionality was dropped.}. This provided the network layer (the layer which IP operates on) and everything above it with secure communication.
 
 % It was thought to address the question of security on the Internet in a conclusive manner, but as the Internet-wide deployment (or switch) to IPv6 still hasn't taken place, other solutions were invented and IPv6's approach of placing the security features in the network layer has been questioned.
 
@@ -413,12 +413,14 @@ I assume that the reader is acquainted with the general principles of IP network
 IPv4 placed all of its settings into one big header, many settings which as of today are rarely used, and the possibility of extending it with new features are severely limited. The designers of IPv6 solved this problem by keeping the fixed header (figure \ref{fig:ipv6_packet}) small and allowing it to be extended by a mechanism called \emph{extension headers}. The extension headers contain any optional information, information which can be intended for the packet's destination host and/or intermediate routers along its path. Although the information is usually supplied by the source host, some headers (such as \emph{Fragment}) can be altered and/or added by routers.
 
 \begin{figure}[here]
+   \centering
    \includegraphics[width=0.9\textwidth]{ipv6-nextheader}
-   \caption{Illustration of IPv6's next header scheme. FIX! Not received permission! Source:http://www.zytrax.com/tech/protocols/ipv6.html}
+   \caption{Illustration of IPv6's next header scheme. Source: \url{http://www.zytrax.com/tech/protocols/ipv6.html}}
    \label{fig:ipv6_nextheader}
 \end{figure}
 
 \begin{figure}[here]
+   \centering
    \includegraphics[width=0.9\textwidth]{wiki-ipv6-nextheader}
    \caption{The generic mandatory part of an `extension header'. Figure from \cite{wiki:ipv6_packet}.}
    \label{fig:wiki-ipv6-nextheader}
@@ -427,6 +429,7 @@ IPv4 placed all of its settings into one big header, many settings which as of t
 The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv6-nextheader}). The field \emph{Next Header} denotes the type of extension header to come or, if this is the last extension header, the packet's type of transport layer; \emph{Hdr Ext Len} is the length of this extension header in multiples of eight octets, not including the first eight octets. The rest of the next header contains data that is specific to each next header type.
 
 \begin{figure}[h!]
+   \centering
    \includegraphics[width=0.9\textwidth]{wiki-ipv6-listofextensionheaders}
    \caption{This list covers a number of common extensions headers `next header'. List from \cite{wiki:ipv6_packet}.}
    \label{fig:wiki-ipv6-listofextensionheaders}
@@ -624,7 +627,7 @@ Secondly, I believe that a major reason as to the current preference of tunnelin
 
 \paragraph{ESP} along with associated security transforms\footnote{`The replacement of the variables in an algebraic expression by their values in terms of another set of variables; a mapping of one space onto another or onto itself; a function that changes the position or direction of the axes of a coordinate system.'\cite{wiki:transforms}} are described in RFC 4303\cite{rfc4303} and RFC 4835\cite{rfc4835}\footnote{Labeled `Cryptographic Algorithm Implementation Requirements for Encapsulating Security Payload (ESP) and Authentication Header (AH)'}, respectively. I implemented basically all of the functionality labeled as \emph{MUST} in RFC 4303. This resulted in an implementation that basically covered all of the externally visible behavior as described in the RFC, with the exception of the omission of ESN (Extended Sequence Numbers) which were deemed unnecessary as a limit of $2^{32}$ packets for an SA are sufficient. All security features such as Sequence Number Verification\citep[3.4.3]{rfc4303} were implemented though in order to comply with section 5, Conformance Requirements\citep[section 5]{rfc4303}.
 
-The document RFC 4835 is the IETF's recommendation as to what security transforms (integrity/authentication, encryption) an IPsec host should be able to handle. The absence of any particular transform is not a security problem per see, but it will lead to one if the hosts then reverts to a common, less secure, transform. In any case, the lack of commonality definitely hampers interoperability. The following algorithms were implemented: AES-XCBC-MAC-96\cite{rfc3566} (authentication / integrity); AES-CTR\cite{rfc3686} (encryption); AES-CBC with 128 bit key\cite{rfc3602} (encryption) (FIX: broken in unpack!); NULL\cite{rfc2410} (encryption). TripleDES-CBC\cite{rfc2451} and HMAC-SHA1-96\cite{rfc2404} are labeled as MUST in the standards document\cite{rfc4835}, but were left out as they (firstly) would be more expensive to implement memory-vise and (secondly) afforded equivalent or lesser security than that of the alternatives.
+The document RFC 4835 is the IETF's recommendation as to what security transforms (integrity/authentication, encryption) an IPsec host should be able to handle. The absence of any particular transform is not a security problem per see, but it will lead to one if the hosts then reverts to a common, less secure, transform. In any case, the lack of commonality definitely hampers interoperability. The following algorithms were implemented: AES-XCBC-MAC-96\cite{rfc3566} (authentication / integrity); AES-CTR\cite{rfc3686} (encryption); AES-CBC with 128 bit key\cite{rfc3602} (encryption) (not tested though); NULL\cite{rfc2410} (encryption). TripleDES-CBC\cite{rfc2451} and HMAC-SHA1-96\cite{rfc2404} are labeled as MUST in the standards document\cite{rfc4835}, but were left out as they (firstly) would be more expensive to implement memory-vise and (secondly) afforded equivalent or lesser security than that of the alternatives.
 
 The lack of certain transforms are, however, a small problem as the implementation easily can be extended thanks to the modularity of the IPsec SA system, which is duplicated in this implementation.
 
@@ -1297,14 +1300,14 @@ The IKEv2 service requires, just like the IPsec system, that the peer that it's 
 %\section{Strength and weaknesses of the implementation}
 
 %\subsection{Things implemented}
-%PRF+ algorithm etc FIX
+%PRF+ algorithm etc
 
 %\subsection{Memory management}
 %The question of memory management 
 %The use of malloc() was a mistake
 
 %\subsection{Re-transmissions}
-%FIX
+%
 %In this implementation, I opted to implement message re-transmissions of 
 %Re-computation of messages instead of buffering. Costly when the shared key has to be re-computed.
 
