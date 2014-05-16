@@ -22,11 +22,10 @@
 %\usepackage[margin]{fancyref}
 \usepackage{xcolor}
 \usepackage{listings}
-\usepackage{acronym}
-%\usepackage{tikz}
+\usepackage{acro}
 
 \DeclareGraphicsExtensions{.eps,.pdf,.png,.jpg,.jpeg}
-\graphicspath{{bilder/}{../share/contiki/fsm/}}
+\graphicspath{{bilder/}} %{../share/contiki/fsm/}}
 
 % For prettyref
 \newrefformat{eq}{\textup{(\nameref{#1})}}
@@ -68,6 +67,33 @@
 }
 
 \lstset{escapechar=@,style=customc}
+
+% Abbrevtiations
+
+\DeclareAcronym{mtu} {
+  short = MTU ,
+  long  = Maximum Transfer Unit ,
+  class = abbrev
+}
+
+\DeclareAcronym{esp} {
+  short = ESP,
+  long  = Encapsulated Security Protocol,
+  class = abbrev
+}
+
+\DeclareAcronym{ah} {
+  short = AH,
+  long  = Authentication Header,
+  class = abbrev
+}
+
+% \DeclareAcronym{} {
+%   short = ,
+%   long  = ,
+%   class = abbrev
+% }
+
 
 
 % For suppressing the chapter label. Not working atm.
@@ -146,6 +172,8 @@ In this the work I explore...
 \setcounter{tocdepth}{4}
 \tableofcontents
 
+\printacronyms[include-classes=abbrev,name=Abbreviations]
+
 \chapter{Populärvetenskaplig sammanfattning}
 nödvändig bakgrundsinformation för en allmänbildad läsare som inte nödvändigtvis är specialist inom området;
 
@@ -213,7 +241,7 @@ Can IPsec and IKEv2 be implemented within the current hardware boundaries while 
     %          * Minnes och beräkningskraft
 					
 \section{Method}
-Much of the research in IoT is carried out by experiments because of the highly applied nature of the field. Indeed, most of the Internet as-of-today, was constructed on the basis of principles surmised from experiments\footnote{E.g. ARPANET and CYCLADES}. Therefore, I decided to implement the various components that makes up a functional IPsec system and then test them. The tests were carried out by subjecting the system to common communication scenarios with other IPsec-enabled Internet hosts: handshaking a new secure connection; receiving and transmitting packets with various security policies applied; housekeeping of connections. The success or failure of the test is determined if it worked, or if it succeeded, how well it did so. Finally, memory consumption and cpu time is measured for the different tasks. It's the results of these tests that will form the basis of the evaluation of the 1) quality and workmanship of the implementation 2) suitability of IPsec for IoT in general.
+Much of the research in IoT is carried out by experiments because of the highly applied nature of the field. Indeed, most of the Internet as-of-today, was constructed on the basis of principles surmised from experiments\footnote{E.g. ARPANET and CYCLADES}. Therefore, I decided to implement the various components that makes up a functional IPsec system and then test them. The tests were carried out by subjecting the system to common communication scenarios with other IPsec-enabled Internet hosts: handshaking a new secure connection; receiving and transmitting packets with various security policies applied; housekeeping of connections. The success or failure of the test is determined if it worked, or if it succeeded, how well it did so. Finally, memory consumption and cpu time is measured for the different tasks. It's the results of these tests that will form the basis of the evaluation of the 1) the implementation's hardware requirements 2) suitability of IPsec for IoT in a wider perspective.
 
 \subsection{Development process}
 The source code was managed using the Git source code revision system. Development was organized in such a way that the project was run in one branch\footnote{Git branches are similar in concept to those in other source code control systems, such as Subversion.} (hereafter called \emph{develop}) parallel to Contiki's master branch. Important patches / changes that occurred in Contiki while the development was underway could thus simply be fetched / merged into \emph{develop}. This proved advantageous as it allowed me `upgrade' the underlying Contiki system at will and in a controlled fashion.
@@ -285,14 +313,14 @@ UDP, TCP as well as ICMP over IPv4 and IPv6 are provided by the $\mu$IP stack, d
 
 \begin{figure}
    \centering
-   \includegraphics[width=.9\linewidth]{dunkels-uip-main_loop}
+   \includegraphics[width=.5\linewidth]{dunkels-uip-main_loop}
    \caption{$\mu$IP's main control loop. From \citep[p.6]{dunkels2003full}}
    \label{fig:uip-ml}
 \end{figure}
 
 \begin{figure}
    \centering
-   \includegraphics[width=.9\linewidth]{dunkels-uip-and-lwip}
+   \includegraphics[width=.5\linewidth]{dunkels-uip-and-lwip}
    \caption{Features of $\mu$IP and the now no longer maintained lwIP. Since the table was published in \citep[p.4]{dunkels2003full} UDP has been added as well to $\mu$IP.}
    \label{fig:uip-features}
 \end{figure}
@@ -321,7 +349,7 @@ The motivation of the IPsec system is to deliver the security services confident
 
 \begin{figure}[h!]
    \includegraphics[width=0.9\textwidth]{ipsec-flow}
-   \caption{IPsec processing of IP-packets. From \citep[p.8]{rfc4301}.}
+   \caption{IPsec processing of IP-packets. See \ref{ipsec_proc} for explanation. Graphics from \citep[p.8]{rfc4301}.}
    \label{fig:ipsec-flow}
 \end{figure}
 
