@@ -22,7 +22,7 @@
 %\usepackage[margin]{fancyref}
 \usepackage{xcolor}
 \usepackage{listings}
-\usepackage{acro}
+\usepackage{acronym}
 
 \DeclareGraphicsExtensions{.eps,.pdf,.png,.jpg,.jpeg}
 \graphicspath{{bilder/}} %{../share/contiki/fsm/}}
@@ -67,33 +67,6 @@
 }
 
 \lstset{escapechar=@,style=customc}
-
-% Abbrevtiations
-
-\DeclareAcronym{mtu} {
-  short = MTU ,
-  long  = Maximum Transfer Unit ,
-  class = abbrev
-}
-
-\DeclareAcronym{esp} {
-  short = ESP,
-  long  = Encapsulated Security Protocol,
-  class = abbrev
-}
-
-\DeclareAcronym{ah} {
-  short = AH,
-  long  = Authentication Header,
-  class = abbrev
-}
-
-% \DeclareAcronym{} {
-%   short = ,
-%   long  = ,
-%   class = abbrev
-% }
-
 
 
 % For suppressing the chapter label. Not working atm.
@@ -146,7 +119,7 @@
 % \end{flushleft}
 
 
-\author{Vilhelm~Jutvik \thanks{To everyone at SICS and the NES group}}
+\author{Vilhelm~Jutvik}
 \date{\today}
 %\title{The adaption of the IKEv2 protocol for The Internet of Things MS Thesis project plan}
 \title{IPsec and IKEv2 for the Contiki OS}
@@ -165,19 +138,87 @@
 % de egna metoderna granskas kritiskt;
 % en jämförelse med andras arbeten rörande liknande problem ingå.
 
-\begin{abstract}
-In this the work I explore...
-\end{abstract}
-
 \setcounter{tocdepth}{4}
 \tableofcontents
 
-\printacronyms[include-classes=abbrev,name=Abbreviations]
 
-\chapter{Populärvetenskaplig sammanfattning}
-nödvändig bakgrundsinformation för en allmänbildad läsare som inte nödvändigtvis är specialist inom området;
+\begin{abstract}
+Contiki is a small and resource-efficient OS for the IoT (Internet of Things). IPsec and IKEv2 are two standards used for secure communication over the Internet. Can they be implemented on Contiki using current hardware while still being interoperable with other Internet hosts? The question was answered by implementing and then evaluating the standards. A connection was established with another Internet host while measurements were made of ROM / RAM consumption, required processing time (i.e. energy consumption). By writing an efficient runtime and using Elliptic Curve Cryptography, I concluded that an interoperable implementation for Contiki was feasible. However, I also found that the standards -as such- were unsuitable for the IoT infrastructure due to their complexity and the fact that IPsec's policies are expressed in network layer primitives (i.e. unsuitable for networks with a dynamic topology).
+\end{abstract}
 
-hot and cold mediums
+\chapter*{Acknowledgements}
+During my time at SICS's NES group (Networked Embedded Systems) I was glad to find that its members not only possessed great expertise of their field, but also a willingness to share it with me. I would like to expressly thank Simon Duquennoy for his encouragement when encumbered with technical difficulties in the djungle of Contiki's echo system of development tools, for sharing his thoughtful insights of problems of the field of IoT during, all while still being a good listener. Niclas Finne is a man with great technical insight of every nook and cranny of the Contiki system, including knowledge of obscure compilator and emulator bugs. I owe him a great deal in helping me out with difficult problems that would have taken me a prohibitive amount of time to solve on my own. Gratitude is also owed to Christian Rohner, Thiemo Voigt and Nicolas Tsiftes who (in order) reviewed my report, who helped me to get started and offered help, and the latter who as a colleague gave me his own excellent report as a reference and offered to review and comment upon mine. Thank you very much! Finally, I would like to thank Navid Hassanzadeh and Beshr Al Nahas for great company in the office and intellectually stimulating discussions during our common commute. Thank you all!
+
+\newpage
+
+\section*{List of Acronyms}
+\begin{acronym}
+   \acro{AES}{The Advanced Encryption Standard is a standard established by NIST}
+   \acro{AES-CBC}{AES Cipher Block Chaining, a block cipher}
+   \acro{AES-CTR}{AES Counter, a stream cipher}
+   \acro{AES-XCBC}{AES-CBC, but for authentication}
+   \acro{AH}{Authentication Header}
+   \acro{API}{Application Programming Interface}
+   \acro{BSS}{Segment of the binary used for statically allocated variables}
+   \acro{DH}{Diffie-Hellman, a method of cryptographic key exchange named after their inventors}
+   \acro{DSCP}{Differentiated Services Code Point}
+   \acro{EAP}{Extensible Authentication Protocol}
+   \acro{ECC}{Elliptic Curve Cryptography}
+   \acro{ECP group}{Elliptic Curve Groups modulo a prime is a set of ECC parameters}
+   \acro{ESP}{Encapsulated Security Payload}
+   \acro{HDR}{Common abbreviation of Header}
+   \acro{HMAC}{A keyed-Hash Message Authentication Code is an hash-algorithm incorporating a key for use in authentication purposes}
+   \acro{ICMP}{Internet Control Message Protocol is a protocol probably most commonly known for its use by UNIX's `ping' utility}
+   \acro{ICV}{Integrity Check Value}
+   \acro{IEEE}{Institute of Electrical and Electronics Engineer}
+   \acro{IETF}{Internet Engineer Task Force is the co-ordinating body of Internet standards}
+   \acro{IKEv2}{Internet Key Exchange version 2}
+   \acro{IP}{Internet Protocol}
+   \acro{ISM}{Industrial, Scientific and Medical radio band}
+   \acro{IoT}{Internet of Things}
+   \acro{KEi}{IKE Key Exchange payload, initiator's public key}
+   \acro{KEr}{IKE Key Exchange payload, responder's public key}
+   \acro{MAC}{Message Authentication Code}
+   \acro{MAC}{Media Access Control, sublayer of Data Link layer}
+   \acro{MTU}{Maximum Transmission Unit}
+   \acro{NAT}{Network Address Translation is commonly used for connection a private IP network to the Internet}
+   \acro{Nr}{IKE Nonce payload, initiator's}
+   \acro{Nr}{IKE Nonce payload, responder's}
+   \acro{OS}{Operating System}
+   \acro{PAD}{Peer Authorization Database}
+   \acro{PAN}{Personal Area Network is a short range network (with approximately 10 m radius)}
+   \acro{PFP}{Populate From Packet}
+   \acro{PKCS}{Public-Key Cryptography Standards}
+   \acro{PRF}{Pseudo-Random Function}
+   \acro{PSTN}{Public Switched Telephone Network, the ordinary phone network}
+   \acro{QoS}{Quality of Service}
+   \acro{RAM}{Random Access Memory}
+   \acro{RFC}{Request For Comment, a class of IETF standards}
+   \acro{ROM}{Read-Only Memory}
+   \acro{RPL}{Routing protocol commonly used for IoT, pronounced `ripple'}
+   \acro{RSA}{Common public-key cryptosystem}
+   \acro{SA}{Security Association}
+   \acro{SAD}{Security Association Database}
+   \acro{SHA1}{}
+   \acro{SICS}{Swedish Institute of Computer Science}
+   \acro{SK}{IKE Payload: Encapsulation of payloads to be protected}
+   \acro{SLOC}{Source Lines Of Code}
+   \acro{SPD}{Security Policy Database}
+   \acro{SPI}{Security Parameter Index}
+   \acro{TCP}{Transmission Control Protocol, an IP Transport Layer protocol}
+   \acro{TLS}{Transport Layer Security, an IETF protocol}
+   \acro{TOS}{Type Of Service}
+   \acro{TSi}{IKE payload: Traffic Selector, initiator's side}
+   \acro{TSr}{IKE payload: Traffic Selector, responder's side}
+   \acro{TripleDES}{Triple Data Encryption Standard from NIST}
+   \acro{UDP}{User Datagram Protocol}
+   \acro{X.509}{ITU-T (International Telephony Union) standard for public key infrastructure (PKI)}
+\end{acronym}
+
+% \chapter{Populärvetenskaplig sammanfattning}
+% nödvändig bakgrundsinformation för en allmänbildad läsare som inte nödvändigtvis är specialist inom området;
+% 
+% hot and cold mediums
 
 \chapter{Introduction}
 \label{cha:intro}
@@ -281,7 +322,7 @@ Contiki is an operating system designed for computers with severely constrained 
 Having stated this, Contiki's greatest benefit is not that it's very compact, it's that it provides `a rich enough execution environment while staying within the limitations of the constrained devices'\citep[Introduction]{dunkels04contiki}. The `rich execution environment' is a reference to Contiki's capability to dynamically load and unload software, its multithreading, mesh networking\cite{tsiftes10rpl} and more, that are all designed to fit within the constraints, memory- as well as energy-wise (i.e. limit the number of execution cycles and keep peripherals such as the radio asleep). We will now review the most important of these features that makes Contiki a popular OS for IoT-devices.
 
 \subsection{Multitasking}
-Multitasking (concurrency) is provided in Contiki by the \emph{Protothreads} mechanism\cite{dunkels2005protothreads}. Before explaining its inner workings, I will provide the reader with a short review of the problems associated with multitasking in resource constrained systems.
+Multi\-tasking (concurrency) is provided in Contiki by the \emph{Proto\-threads} mechanism\cite{dunkels2005protothreads}. Before explaining its inner workings, I will provide the reader with a short review of the problems associated with multitasking in resource constrained systems.
 
 The motivation underlying protothreads is to provide the programmer with multitasking that is easy to use, easy to understand and low in resource consumption. Multitasking has traditionally been implemented in virtually all operating systems by the means of \emph{processes}. In such a model, each \emph{process} is associated with an executable, has its own private stack and memory, set of registers (etc) and can be interrupted (more specifically, \emph{preempted}), at any time by the operating system's \emph{scheduler} in order to run a kernel specific task or to \emph{schedule} another task. In all cases where a process is preempted, a \emph{context switch} has to take place where much of the CPU's registers are changed, caches flushed etc. This is unsuitable for constrained environments due to the massive memory overhead of a process structure, private stacks and the energy required for doing a context switch.
 
@@ -289,7 +330,7 @@ One approach to overcome these drawbacks while still allowing some form of multi
 
 Contiki took a different route and provided the programmer with a model that resembled the sequential programming style (which is believed to be more comfortable for the majority of developers)\footnote{I found this reasoning to have merit after having participated in a course where application programming for TinyOS as well as Contiki was taught, having observed that the vast majority of his classmates preferred Contiki's Protothreads to TinyOS' nesC.}, but still benefitted from the efficiency of the event driven state machine.
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
    \centering
    \includegraphics[width=0.9\textwidth]{dunkels-protothreads-example}
    \caption{Example code for a radio transmission program utilizing Protothreads. From \citep[p.7]{dunkels2005protothreads}}
@@ -347,14 +388,14 @@ The motivation of the IPsec system is to deliver the security services confident
 %\paragraph{IPsec provides confidentiality, authen, ... } between these hosts or networks. It 
 
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
    \includegraphics[width=0.9\textwidth]{ipsec-flow}
    \caption{IPsec processing of IP-packets. See \ref{ipsec_proc} for explanation. Graphics from \citep[p.8]{rfc4301}.}
    \label{fig:ipsec-flow}
 \end{figure}
 
-\paragraph{In the IPsec processing model} \label{ipsec_proc}
-IP-packets are said to be passed from \emph{protected} to \emph{unprotected} network interfaces and vice versa. In the usual case, such as above, there are only one of each. The unprotected interface is always the interface connected to the insecure network, while the protected may be either connected to a secure network (the \emph{security gateway} configuration) or be attached to an operating system's IP stack. The flow of packets between the protected and unprotected interfaces are determined by policies set by the system administrator which are expressed in terms of network- and transport-layer primitives, i.e. IP addresses, port numbers and transport-layer protocols. The policy can cause a packet to be: thrown away (\emph{DISCARD}); forwarded over the IPsec boundary without any action taken (\emph{BYPASS}; removing or applying cryptographic protection of the packet (\emph{PROTECT}). The latter is performed in the module named \emph{AH/ESP} in \prettyref{fig:ipsec-flow} which handles the decoding and encoding of the AH and ESP IPv6 extension headers (as discussed in length in \prettyref{sec:uiphdr}).
+\label{ipsec_proc}
+\paragraph{In the IPsec processing model} IP-packets are said to be passed from \emph{protected} to \emph{unprotected} network interfaces and vice versa. In the usual case, such as above, there are only one of each. The unprotected interface is always the interface connected to the insecure network, while the protected may be either connected to a secure network (the \emph{security gateway} configuration) or be attached to an operating system's IP stack. The flow of packets between the protected and unprotected interfaces are determined by policies set by the system administrator which are expressed in terms of network- and transport-layer primitives, i.e. IP addresses, port numbers and transport-layer protocols. The policy can cause a packet to be: thrown away (\emph{DISCARD}); forwarded over the IPsec boundary without any action taken (\emph{BYPASS}; removing or applying cryptographic protection of the packet (\emph{PROTECT}). The latter is performed in the module named \emph{AH/ESP} in \prettyref{fig:ipsec-flow} which handles the decoding and encoding of the AH and ESP IPv6 extension headers (as discussed in length in \prettyref{sec:uiphdr}).
    
 \paragraph{IPsec affords protection for the traffic passed between networks as well as that between individual hosts.} In the former case, two IP networks are linked to each other by an IP-tunnel\footnote{An IP-tunnel allows communication between two IP-networks that don't have a routing path between each other. As the packets are transported by means of encapsulation (one IP-packets is transported in the payload field of another), other protocols can be `tunneled'  as well.} with an IPsec host at either end, acting as \emph{Security Gateways}. Packets that are routed to the other host's network are encapsulated in a security container (so called AH and ESP headers, which we will explain in \prettyref{sec:bgah} and \prettyref{sec:bgesp}) and dispatched to the Security Gateway at the other end of the tunnel. This allows secure communication between two networks and is useful when their hosts are not configured for IPsec. This mode of operation is referred to as \emph{tunnel mode} in the standards documents.
 
@@ -440,14 +481,14 @@ I assume that the reader is acquainted with the general principles of IP network
 
 IPv4 placed all of its settings into one big header, many settings which as of today are rarely used, and the possibility of extending it with new features are severely limited. The designers of IPv6 solved this problem by keeping the fixed header (figure \ref{fig:ipv6_packet}) small and allowing it to be extended by a mechanism called \emph{extension headers}. The extension headers contain any optional information, information which can be intended for the packet's destination host and/or intermediate routers along its path. Although the information is usually supplied by the source host, some headers (such as \emph{Fragment}) can be altered and/or added by routers.
 
-\begin{figure}[here]
+\begin{figure}[h]
    \centering
    \includegraphics[width=0.9\textwidth]{ipv6-nextheader}
    \caption{Illustration of IPv6's next header scheme. Source: \url{http://www.zytrax.com/tech/protocols/ipv6.html}}
    \label{fig:ipv6_nextheader}
 \end{figure}
 
-\begin{figure}[here]
+\begin{figure}[h]
    \centering
    \includegraphics[width=0.9\textwidth]{wiki-ipv6-nextheader}
    \caption{The generic mandatory part of an `extension header'. Figure from \cite{wiki:ipv6_packet}.}
@@ -456,7 +497,7 @@ IPv4 placed all of its settings into one big header, many settings which as of t
 
 The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv6-nextheader}). The field \emph{Next Header} denotes the type of extension header to come or, if this is the last extension header, the packet's type of transport layer; \emph{Hdr Ext Len} is the length of this extension header in multiples of eight octets, not including the first eight octets. The rest of the next header contains data that is specific to each next header type.
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
    \centering
    \includegraphics[width=0.9\textwidth]{wiki-ipv6-listofextensionheaders}
    \caption{This list covers a number of common extensions headers `next header'. List from \cite{wiki:ipv6_packet}.}
@@ -467,7 +508,7 @@ The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv
 \section{The AH protocol in IPv6}
 \label{sec:bgah}
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
    % \includegraphics[width=0.9\textwidth]{wiki-ipsec-ah}
    % \caption{The AH extension header. From \cite{wiki:ah_header}.}
    % \label{fig:wiki-ipsec-ah}
@@ -480,7 +521,7 @@ The extension header scheme is basically a linked list (figure \ref{fig:wiki-ipv
 
 The AH protocol's header (\emph{Authentication Header}) described in RFC 4302\cite{rfc4302} guarantees the \emph{data integrity} and the \emph{data authentication} (origin) of the IP packet which it is applied to. This is achieved by applying a \emph{Message Authentication Code} (MAC) to the packet's content and to the header's immutable fields using a key privy to the two parties.
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
    \includegraphics[width=0.9\textwidth, trim=0 205 0 210]{wiki-mac}
    \caption{Message Authentication Code. From \cite{wiki:mac}.}
    \label{fig:wiki-mac}
@@ -498,7 +539,7 @@ The parameters of the process (such as key, key length and type of MAC algorithm
 \section{The ESP protocol in IPv6}
 \label{sec:bgesp}
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
    % \includegraphics[width=0.9\textwidth]{wiki-ipsec-ah}
    % \caption{The AH extension header. From \cite{wiki:ah_header}.}
    % \label{fig:wiki-ipsec-ah}
@@ -634,7 +675,7 @@ Contiki targets\footnote{A compiler is said to be \emph{targeting} a certain CPU
 % As the author only had a rudimentary knowledge (roughly comparable as that of system administrator) of IPsec / IKEv2, he decided to that the safest way.
 
 \section{IPsec}
-At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza11securing}). It had the ability to receive as well as transmit AH and ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used for duplex traffic. This implementation served as a proof-of-concept of the basics of IPsec on Contiki, as well as an IPsec header compression scheme in the underlying MAC-layer. Having stated this, the lack of support for multiple SAs and the inability to negotiate new ones made it difficult to fit it into a real world network environment where communication patterns are subject to constant change and keys need to be renewed as they age and lose their security properties.
+At the project's inception, there was already a rudimentary implementation of IPsec in place (described in \cite{raza11securing}). It had the ability to receive as well as transmit AH and ESP headers, but could only handle one set of security parameters, effectively limiting the host to one SA that was used for duplex traffic. This implementation served as a proof-of-concept of the basics of IPsec on Contiki, as well as an IPsec header compression scheme in the underlying MAC-layer. Having stated this, the lack of support for multiple SAs and the inability to negotiate new ones made it difficult to fit it into a real world network environment where communication patterns are subject to constant change and keys need to be renewed as they age and lose their security properties. % This is where I talk about the benefits of multiple SAs
 
 In this section, I will begin by describing the IPsec implementation's design specification, its rationale, and most importantly its RFC-compliance. It will then continue with a review of how the technical problems have been solved.
 
@@ -653,7 +694,7 @@ Firstly, the most common use cases of network-to-network connections are: The si
 % No. 2
 Secondly, I believe that a major reason as to the current preference of tunneling over transport mode is that the latter is incompatible with NAT if used in conjunction with TCP, which is almost always the case. Tunnel mode is presented as the solution in RFC 3715\cite[2.1.b)]{rfc3715}. However, since this implementation constrains itself to IPv6, this problem disappears as the need for NAT is projected to go away with the introduction of IPv6 networks\footnote{NAT is commonly used to deal with the lack of IPv4 address space by `hiding' several hosts behind one public IP. IPv6 is conjectured to resolve this bye virtue of its $2^{128}$ address space.}.
 
-\paragraph{ESP} along with associated security transforms\footnote{`The replacement of the variables in an algebraic expression by their values in terms of another set of variables; a mapping of one space onto another or onto itself; a function that changes the position or direction of the axes of a coordinate system.'\cite{wiki:transforms}} are described in RFC 4303\cite{rfc4303} and RFC 4835\cite{rfc4835}\footnote{Labeled `Cryptographic Algorithm Implementation Requirements for Encapsulating Security Payload (ESP) and Authentication Header (AH)'}, respectively. I implemented basically all of the functionality labeled as \emph{MUST} in RFC 4303. This resulted in an implementation that basically covered all of the externally visible behavior as described in the RFC, with the exception of the omission of ESN (Extended Sequence Numbers) which were deemed unnecessary as a limit of $2^{32}$ packets for an SA are sufficient. All security features such as Sequence Number Verification\citep[3.4.3]{rfc4303} were implemented though in order to comply with section 5, Conformance Requirements\citep[section 5]{rfc4303}.
+\paragraph{ESP} along with associated security transforms\footnote{`The replacement of the variables in an algebraic expression by their values in terms of another set of variables; a mapping of one space onto another or onto itself; a function that changes the position or direction of the axes of a coordinate system.'\cite{wiki:transforms}} is described in RFC 4303\cite{rfc4303} and RFC 4835\cite{rfc4835}\footnote{Labeled `Cryptographic Algorithm Implementation Requirements for Encapsulating Security Payload (ESP) and Authentication Header (AH)'}, respectively. I implemented basically all of the functionality labeled as \emph{MUST} in RFC 4303. This resulted in an implementation that basically covered all of the externally visible behavior as described in the RFC, with the exception of the omission of ESN (Extended Sequence Numbers) which were deemed unnecessary as a limit of $2^{32}$ packets for an SA are sufficient. All security features such as Sequence Number Verification\citep[3.4.3]{rfc4303} were implemented though in order to comply with section 5, Conformance Requirements\citep[section 5]{rfc4303}.
 
 The document RFC 4835 is the IETF's recommendation as to what security transforms (integrity/authentication, encryption) an IPsec host should be able to handle. The absence of any particular transform is not a security problem per see, but it will lead to one if the hosts then reverts to a common, less secure, transform. In any case, the lack of commonality definitely hampers interoperability. The following algorithms were implemented: AES-XCBC-MAC-96\cite{rfc3566} (authentication / integrity); AES-CTR\cite{rfc3686} (encryption); AES-CBC with 128 bit key\cite{rfc3602} (encryption) (not tested though); NULL\cite{rfc2410} (encryption). TripleDES-CBC\cite{rfc2451} and HMAC-SHA1-96\cite{rfc2404} are labeled as MUST in the standards document\cite{rfc4835}, but were left out as they (firstly) would be more expensive to implement memory-vise and (secondly) afforded equivalent or lesser security than that of the alternatives.
 
@@ -822,11 +863,11 @@ The prime requirements of the IKEv2 service is to negotiate, maintain and delete
 
 \paragraph{The exchange of cryptographic keys} is performed by means of a \emph{Diffie-Hellman} (DH) key exchange\footnote{The Diffie-Hellman key exchange is a scheme that is commonly used for exchanging keys over insecure channels (such as the Internet) in a secure fashion. Diffie-Hellman, and its successor, the RSA scheme, are widely used by Internet applications.}. This exchange is very hardware-intensive in regard to memory as well as calculations (and thus energy), as is typical of asymmetric encryption schemes. This has limited the use of such security mechanisms in IoT systems.
 
-Briefly, the reason that asymmetric encryption is so resource intensive is that it's centered around operations on very large numbers. The operations are very simple (e.g. $A = g^{a} mod p$), but in the case of the popular RSA scheme, the numbers $a$ and $A$, which forms the so called public and private key, respectively, can be so large that they require 3072 bits to represent. A DH exchange with such a long key is most often not feasible in an IoT context.
+Briefly, the reason that asymmetric encryption is so resource intensive is that it's centered around operations on very large numbers. The operations are very simple (e.g. $A = g^{a} \mod p$), but in the case of the popular RSA scheme, the numbers $a$ and $A$, which forms the so called public and private key, respectively, can be so large that they require 3 072 bits to represent. A DH exchange with such a long key is most often not feasible in an IoT context.
 
 The method used by RSA (and that is referred to in the example above) is a DH key exchange using certain qualities inherent to multiplicative groups of integers modulo $n$. A development of this idea, called \emph{Elliptic Curve Cryptography (ECC)} allows a DH exchange using much smaller key sizes, without forsaking security. Considering only the DH exchange, ECC provides no technical drawbacks in comparison to RSA, but only benefits in terms hardware resources and energy. Because of this, IETF standardized several ECC parameters (ECP groups) for the use in the IKEv2 protocol (RFC 5114: Additional Diffie-Hellman Groups for Use with IETF Standards\cite{rfc5114}). I believe that the reason as to why ECC isn't already in widespread use is that 1) some parts of ECC is encumbered with patents 2) implementations of RSA are widespread and accepted as the standard solution to asymmetric encryption.
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
    \includegraphics[width=1.0\textwidth]{rfc5114-security}
    \caption{In section 4, `Security Considerations', of RFC 5114\cite{rfc5114} the authors argue that ECC keys can be made much shorter without sacrificing security. Each line is cross-reference of different encryption types and key lengths offering the same cryptographic security. Notably, the benefits of ECC becomes even greater as the level of security is increased.}
    \label{fig:eccbenefits}
@@ -855,7 +896,7 @@ Because of the aforementioned reasons, I have opted to implement the Shared Key 
 \section{IKEv2 Implementation}
 The IKEv2 implementation supports several concurrent sessions, each modeled as a mealy state machine\footnote{In a mealy state machine the output is function of the current state as well the current input, i.e. the output is a function of the transition.} that persists as long as the IKE SA is alive. As I will show, this enables communication with multiple hosts without excessive memory consumption.
 
-\begin{figure}[h!]
+\begin{figure}[!ht]
    \includegraphics[width=1.0\textwidth]{fsm/mealy_demo}
    \caption{State machine example}
    \label{fig:mealydemo}
@@ -876,7 +917,7 @@ Finally, before continuing with the description of the initiator machine, i woul
 \subsection{Initiator machine}
 An IKEv2 session is started or \emph{initiated} by one of the peers. The other peer that is contacted by the latter is then considered to be the \emph{responder}. The state machines for the two roles are slightly different, in the sense that the steps in the handshake process comes in a different order, but they are essentially the same and most of the source code are in common. This part describes the initiator machine, but it will allow you to understand the responder as well.
 
-\begin{figure}[h]
+\begin{figure}[ht]
    \includegraphics[width=1.0\textwidth]{fsm/initiator_mealy}
    \caption{The IKEv2 initiator's state machine}
    \label{fig:initiator-machine}
@@ -888,7 +929,7 @@ An instance of the initiator machine is (as displayed in \prettyref{fig:initiato
 
 The state machine is now in state \#2 and \textbf{waits for the peer's reply}, a message containing the very same payloads that we just sent. If the peer accepted our IKE SA offer, the SA payload will now contain the peer's choice of cryptographic transforms, a subset of our previous offer. Likewise, if the peer found our choice of asymmetric algorithm acceptable, the KE payload will contain the peer's public key calculated for the same parameters\footnote{A Diffie-Hellman key exchange's cryptographic transform is determined by its IKE DH group, in IKEv2 parlance.}. Both peers now have a shared Diffie-Hellman secret and can thus form an IKE SA using the secret as the source of keying material. This is done in the following way:
 
-\begin{figure}[h]
+\begin{figure}[ht]
    \begin{verbatim}
 SKEYSEED = prf(Ni | Nr, g^ir) 
 {SK_d | SK_ai | SK_ar | SK_ei | SK_er | SK_pi | SK_pr } =
@@ -898,7 +939,7 @@ SKEYSEED = prf(Ni | Nr, g^ir)
 \end{figure}
 
 
-\begin{figure}[h]
+\begin{figure}[ht]
    \begin{verbatim}
       prf = HMAC (Key, String) 
       
@@ -918,7 +959,7 @@ Given that we can parse the peer's message without trouble, \textbf{the state ma
 
 As previously stated, IKEv2 can use both digital signatures as well as shared keys, this implementation making use of the latter. In common to both methods is that their authentication data is based upon a signature or hash of the string in \prettyref{fig:sign-string}.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \begin{verbatim}
 InitiatorSignedOctets = RealMessage1 | NonceRData | MACedIDForI
 GenIKEHDR = [ four octets 0 if using port 4500 ] | RealIKEHDR 
@@ -935,7 +976,7 @@ MACedIDForI = prf(SK_pi, RestOfInitIDPayload)
 
 The fact that the string described in \prettyref{fig:sign-string} includes previously transmitted messages (RealMessage1) incurs an extra memory overhead as the messages needs to be buffered. In this implementation I partly alleviate this problem by only buffering the remote peer's message. The peer's own message is reproduced by simply re-running the transition associated with the message in question.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \begin{verbatim}
 AUTH = prf( prf(Shared Secret, "Key Pad for IKEv2"),
 <InitiatorSignedOctets>)
@@ -952,11 +993,11 @@ The implementation constructs a set of traffic selectors that are in compliance 
 
 \textbf{The state machine now expects an IKE\_AUTH reply from the peer.} Just as with the IKE\_SA\_INIT exchange, we expect to see the same payloads in return: The peer's ID; peer's authentication data; child SA transform reply; traffic selector reply.
 
-The authentication data is re-computed, but using the peer's values instead, according to the procedure in \prettyref{fig:sign-string} and \prettyref{fig:final-sign}. If the computed value corresponds to that in the received AUTH payload, we can be certain that the peer that we share the IKE SA with is also in possession of the \emph{shared secret} referred to in \prettyref{fig:final.sign}.
+The authentication data is re-computed, but using the peer's values instead, according to the procedure in \prettyref{fig:sign-string} and \prettyref{fig:final-sign}. If the computed value corresponds to that in the received AUTH payload, we can be certain that the peer that we share the IKE SA with is also in possession of the \emph{shared secret} referred to in \prettyref{fig:final-sign}.
 
 With authentication complete, the state machine can now create the child SAs (each being half-duplex with respect to traffic flow). The child SA transform (encryption, intergrity and authentication settings) reply is expected to be a subset of that we sent to the peer, if it found it acceptable. If the transform set is indeed a subset of the offer, the transforms are accepted. The corresponding procedure is carried out for the traffic selector set: the reply is accepted if it's a subset of the offer.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \begin{verbatim}
 KEYMAT = prf+(SK_d, Ni | Nr)
@@ -973,7 +1014,7 @@ The responder shares almost all of its code with the initiator. What sets them a
 
  % As the responder The latter has implications for memory management: The responder can always access the initiator's packet in Contiki's IP packet buffer and therefore doesn't need to buffer . where the responder has access to the packet's data just received from the initiator while the latter has to buffer them for computations done at a later stage.
 
-\begin{figure}[h]
+\begin{figure}[ht]
    \includegraphics[width=1.0\textwidth]{fsm/responder_mealy}
    \caption{The IKEv2 responder's state machine}
    \label{fig:responder-machine}
@@ -991,7 +1032,11 @@ The suite makes use of several cryptographic algorithms e.g. SHA1, HMAC, AES, et
 
 \chapter{Evaluation}
 \label{cha:eval}
-The software was evaluated using the Cooja emulator as stated in \prettyref{sec:finaldev}. The emulated mote (Wismote) features a 16 bit CPU with an instruction set (MSP430x) that includes instructions for 20 bit memory operations and runs at 16 MHz. There is 16 kB RAM and 128 kB of flash (for storing program data). Usually IoT application like this is evaluated on the Tmote Sky platform, but as I will soon show you, its 16 bit memory space is too limited (keep in mind that the RAM and flash area occupies the same $2^16$ address space).
+The software was evaluated using the Cooja application (as stated in \prettyref{sec:finaldev}). As Cooja is a fully featured simulation environment, not only could the software be tested on emulated hardware, a complete simulation of the radio environment using several motes can be performed as well. Although the radio / network simulation was used to make the evaluation (as described below) more realistic, my main focus was the fidelity of the hardware emulation.
+
+The CPU and some peripherals (most notably the CC2540 radio) is emulated on the instruction-level with an efficiency that allowed me to run two motes simultaneously with real-time execution speeds. This allows Cooja (most importantly) to accurately model memory, interrupts and radio - MCU interaction. The result is a simulation that closely mimics the behavior of the real hardware (including its network timing behavior), with the exceptions of possible emulator bugs. Thankfully, my IPsec / IKEv2 implementation is not dependent upon any special features of the hardware, but only concerns itself with IP, and is thus not likely to be affected by any of the aforementioned bugs.
+
+The emulated mote (Wismote) features a 16 bit CPU with an instruction set (MSP430x) that includes instructions for 20 bit memory operations and runs at 16 MHz. There is 16 kB RAM and 128 kB of flash (for storing program data). Usually IoT application like this is evaluated on the Tmote Sky platform, but as I will soon show you, its 16 bit memory space is too limited (keep in mind that the RAM and flash area occupies the same $2^16$ address space).
 
 The other peer consisted of Cooja's host using the Linux kernel's native IPsec implementation and the Strongswan software suite for providing the IKEv2 services.
 
@@ -1004,7 +1049,7 @@ The IPsec part of this implementation should be, to the best of the author's kno
    \item The ESP header
    \item IPsec Transport mode
    \item Traffic selectors (traffic multiplexing over SAs)
-   \item SAD, with mechanism for SA expiration
+   \item SAD, with mechanism for SA expiration % Multiple SAs
    \item SPD and related functions (including one SA offer for each SPD rule)
    \item Confidentiality protection (Encryption): 
    \begin{itemize}
@@ -1041,7 +1086,7 @@ The IKEv2 implementation is a subset of the standard described by RFC 5996. It's
    \item SPD interface that allows multiple IKE SA offers
    \item SK payload: Code for encryption and integrity is shared with IPsec's ESP
    \item Multiple concurrent sessions supported
-   \item Multiple child SAs per IKE SA
+   \item Multiple child SAs per IKE SA % Multiple SAs
 \end{itemize}
 
 \subsection{Major features not implemented}
@@ -1088,7 +1133,7 @@ All code was compiled with MSPGCC 4.7.2 without debug symbols and using the opti
 
 This resulted in the following figures for a default Contiki system (i.e. no IPsec / IKEv2 features), NOIKE and WITHIKE, respectively:
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \begin{verbatim}
     text	   data	    bss	    dec	filename
    55734	    264	   9310	  65308	manualsa-noike.wismote
@@ -1103,12 +1148,13 @@ This resulted in the following figures for a default Contiki system (i.e. no IPs
 % 46,634765625 8,99609375
 % 72,7822265625   9,638671875
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \begin{tabular}{c|l|l}
 Configuration                          & ROM (text + data)        & RAM (data + BSS)            \\ \hline
 default (Contiki with $\mu$IP6)        & 46.6 kB                  & 9.0 kB                      \\
 NOIKE                                  & 54.7 ($\Delta8.1$) kB    & 9.4 ($\Delta0.4$) kB        \\
-WITHIKE                                & 72.8 ($\Delta26.2$) kB   & 9.6 ($\Delta0.6$) kB
+WITHIKE                                & 72.8 ($\Delta26.2$) kB   & 9.6 ($\Delta0.6$) kB        \\
+Wismote's memory limits                & 128 kB                   & 16 kB                       
 \end{tabular}
 \label{tab:rom-ram-eval}
 \caption{ROM and RAM requirements, with size difference relative to the default configuration noted.}
@@ -1146,7 +1192,7 @@ However, the stack requirements of the WITHIKE configuration are extensive becau
 
 \paragraph{The size of the stack was measured by} writing a 2 kB long string consisting of the letter `h' to the top of the stack before commencing the IKEv2 handshake. That string's memory was then investigated after the handshake to see what parts had been overwritten by the service's handshake routines:
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \begin{verbatim}
 for ( i = STACK_MAX_MEM - 5;
@@ -1160,14 +1206,14 @@ for ( i = STACK_MAX_MEM - 5;
 
 The maximum extent of the stack during the handshake was found to be 320 Bytes according to this method.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \label{tab:eval-stack}
 \begin{tabular}{c|l}
-Exchange                      & Maximum extent of stack  \\ \hline
-IKE\_SA\_INIT exchange      & $321$ B                    \\
-IKE\_AUTH exchange          & $203$ B                    \\
-After handshake            & Not applicable
+Exchange                      & Maximum extent of stack     \\ \hline
+IKE\_SA\_INIT exchange        & $321$ B                     \\
+IKE\_AUTH exchange            & $203$ B                     \\
+After handshake               & Not applicable
 \end{tabular}
 \caption{Maximum extent of the stack at different times during the key exchange.}
 \end{figure}
@@ -1178,11 +1224,11 @@ The use of heap allocation is not customary in Contiki - fixed buffers are used 
 The memory usage was traced by creating a wrapper function around the call to \emph{malloc} and \emph{free} that kept statistics on memory allocation. This resulted in the following memory pattern for the node when acting as the IKEv2 responder:
 
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \label{tab:eval-heap}
 \begin{tabular}{c|l}
-Exchange                      & Maximum amount of heap memory allocated    \\ \hline
+Exchange                      & Maximum amount of allocated heap           \\ \hline
 IKE\_SA\_INIT exchange        & 930 B                                      \\
 IKE\_AUTH exchange            & 1142 B                                     \\
 After handshake               & 402 B
@@ -1190,6 +1236,7 @@ After handshake               & 402 B
 \caption{Maximum size of the heap at different times during the key exchange.}
 \end{figure}
 
+% Multiple SAs
 Of the remaining memory, $2 * 106 B$ is used for the SAs\footnote{Keep in mind that IPsec requires one SA for each direction} and 190 B is consumed by the IKE SA. If more SAs are created using this IKE SA, the memory consumption would increase on the order of $2 * 106 B$ per duplex connection.
 % 
 % \begin{tabular}{c|l|l|l}
@@ -1202,7 +1249,7 @@ Of the remaining memory, $2 * 106 B$ is used for the SAs\footnote{Keep in mind t
 \section{Latency}
 The CPU time consumed by the IKEv2 service during a key exchange is 10.9 seconds when run on the Wismote. This excludes the time required to transmit the messages and the other peer's delay. The total time (i.e. clock time) for a key exchange is 11.1 seconds. That includes message transmission time as well as the delay caused by the other peer.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \begin{tabular}{c|l}                        
 Exchange                   & CPU Time consumed     \\ \hline
@@ -1223,7 +1270,7 @@ The latency / CPU time associated with the NOIKE option was not investigated as 
 \label{sec:eval-sum}
 The RAM consumption of the IKEv2 service is changing as the system boots; SAs are established; and the service returns to an idle state. Investigating these figures allows us to understand how much memory that is left for applications at different times.
 
-\begin{figure}[h]
+\begin{figure}[ht]
 \centering
 \begin{tabular}{ p{2.25cm} | l | p{2.25cm} | p{2.25cm} | p{2.25cm} }                        
 State                   & $BSS + data$ & Max. extent of stack  & Max. extent of heap   & Total Maximum  \\ \hline
@@ -1231,7 +1278,8 @@ After boot up           & 9.6 kB       & 0 kB                  & 0 kB           
 IKE\_SA\_INIT exchange  & 9.6 kB       & 321 B                 & 930 B                 & 10.9 kB      \\
 IKE\_AUTH exchange      & 9.6 kB       & 203 B                 & 1142 B                & 11.0 kB      \\
 Est. SA pair and IKE-SA & 9.6 kB       & 0 B                   & 402 B                 & 10.0 kB      \\
-Est. SA pair            & 9.6 kB       & 0 B                   & 212 B                 & 9.9 kB
+Est. SA pair            & 9.6 kB       & 0 B                   & 212 B                 & 9.9 kB       \\
+Wismote's RAM limit     & N/A          & N/A                   & N/A                   & 16 kB
 \end{tabular}
 \caption{The data in the table is based up the figures presented above. The second column is the size requirement of the image, the second and third is memory used by IKEv2 dynamically, and the fourth is the sum of the memory used by IKEv2 at the current phase. The sums are recomputed from the original, non-rounded, size measurements.}
 %`RAM used' is the sum of the image's \emph{data}- and \emph{BSS}-area and the current size of the \emph{Stack} and \emph{Heap}.}
@@ -1241,11 +1289,11 @@ This reveals that the maximum memory usage of the IKEv2 service occurs during IK
 
 
 \section{Source code complexity}
-A common way of measuring source code complexity is by the number of lines of source code (commonly abbreviated as SLOC). Counting the number of of lines of code; including comments, but excluding blank lines; the full software suite (IPsec + IKEv2) encompass $11 764$ lines of C source code. If comments are excluded, the number of lines becomes $5 985$.
+A common way of measuring source code complexity is by the number of lines of source code (commonly abbreviated as SLOC). Counting the number of of lines of code; including comments, but excluding blank lines; the full software suite (IPsec + IKEv2) encompass 11 764 lines of C source code. If comments are excluded, the number of lines becomes 5 985.
 
-Of those $11 764$ lines, $3 801$ lines (code as well as comments) are consumed by the support library ContikiECC (unused elliptic curves and features are not included in the figure) and the HMAC implementation. The various IPsec transforms (AES-CTR etc) and the supporting AES implementation are not included in this figure.
+Of those 11 764 lines, 3 801 lines (code as well as comments) are consumed by the support library ContikiECC (unused elliptic curves and features are not included in the figure) and the HMAC implementation. The various IPsec transforms (AES-CTR etc) and the supporting AES implementation are not included in this figure.
 
-Out of the total $11 764$ lines, $7 109$ lines (approximately $3 200$ lines if excluding comments) is the exclusive work of the author. In addition to this, my work also consisted of: adaption of TinyECC (written for TinyOS originally) for Contiki, forming what I named `ContikiECC'; key parts of the HMAC-SHA1-96 implementation was changed in such a way that it could make use of ContikiECC's SHA1-implementation in order to save memory; the implementation of IPsec's transforms were re-written in a number of ways in order to interface with the rest of the IPsec stack and improve clarity.
+Out of the total 11 764 lines, 7 109 lines (approximately 3 200 lines if excluding comments) is the exclusive work of the author. In addition to this, my work also consisted of: adaption of TinyECC (written for TinyOS originally) for Contiki, forming what I named `ContikiECC'; key parts of the HMAC-SHA1-96 implementation was changed in such a way that it could make use of ContikiECC's SHA1-implementation in order to save memory; the implementation of IPsec's transforms were re-written in a number of ways in order to interface with the rest of the IPsec stack and improve clarity.
 
 
 
@@ -1280,7 +1328,7 @@ Previous publications\cite{raza11securing} have shown that IPsec is feasible on 
 
 With the purpose of making the discussion clearer I have elected to discuss future hardware in terms of a reference platform of my choice, namely STM32W from STMicroelectronics, which Contiki has been ported to. It's an ARM Cortex M3 based platform featuring an embedded IEEE 802.15.4 radio, up to 16 kB and 256 kB of RAM and flash memory (ROM), respectively. There are many reasons to expect hardware like this to become the mainstay of IoT nodes in the near future, but the chief one is that these MCUs are becoming more power-efficient\cite{ko2012low} (in per-instruction as well as in sleep-mode power consumption) than the (in the world of IoT) hitherto incumbent line of 8- and 16-bit devices.
 
-The investigation of the feasibility of IPsec/IKEv2 (or any other network protocol for that matter) on Contiki begins by determining the ROM and RAM requirements of the protocol's implementation. Subsequently, it must be asserted that there is enough resources left for the typical application using the service. This is not a problem on the Wismote platform, which has 6 kB of RAM and 55 kB of ROM to spare after the IPsec/IKEv2 system has established an SA pair (see \prettyref{sec:eval-sum}). On the future reference platform, these margins will become plentiful.
+The investigation of the feasibility of IPsec/IKEv2 (or any other network protocol for that matter) on Contiki begins by determining the ROM and RAM requirements of the protocol's implementation. Subsequently, it must be asserted that there is enough resources left for the typical application using the service. \textbf{This is not a problem on the Wismote platform, which has 6 kB of RAM and 55 kB of ROM to spare after the IPsec/IKEv2 system has established an SA pair} (see \prettyref{sec:eval-sum}). On the future reference platform, these margins will become plentiful.
 
 However, feasibility is not achieved by simply fulfilling the memory requirements. It must be \emph{usable} as well i.e. operate in its environment completing its intended functionality. For IPsec/IKEv2 this translates into the following criteria: are the \emph{communication delays} with other peers tolerable (IKEv2); \emph{energy usage} (both); can the \emph{interoperability}\footnote{In this context, interoperability is defined as the ability to communicate with other peers.} be deemed passable? I will herein only discuss IPsec in the context of interoperability, as the other aspects have been conclusively covered in \cite{raza11securing}, which features a very similar implementation (discussed in \prettyref{sec:latency-similar}).
 
@@ -1360,12 +1408,14 @@ This begs the question: Why has this trivial optimization technique hitherto not
 
 
 \section{IPsec and Contiki}
-IPsec is widely criticized for being too complex (e.g. \cite{Ferguson00acryptographic}). Here follows two commonly cited examples of this: the AH protocol, which i elected to remove as I argued that its functionality was already provided by ESP (\prettyref{para:ah-not-impl}); the fact that duplex connections requires two SAs, increasing memory overhead; the complexities incurred by using traffic flow as primitives in the security policy\footnote{Good examples of this are found on p. 42 in RFC 5996 which concerns Traffic Selector negotiation and p. 24 in RFC 4301 on the topic of SPD De-correlation.}. Naturally, this complexity puts the suitability of the IPsec/IKEv2 suite into question as it increases hardware requirements. Furthermore, the security provided by IPsec will often have to be complemented in the application layer as applications themselves often use other security primitives than than those of IPsec (which discriminates on hosts, transport protocols and the latter's properties such as ports). A good example of this is TLS commonly used by HTTP web services, which allow identification of the user.
+\label{sec:ipsec-and-contiki}
+IPsec is widely criticized for being too complex (e.g. \cite{Ferguson00acryptographic}). Here follows two commonly cited examples of this: the AH protocol, which i elected to remove as I argued that its functionality was already provided by ESP (\prettyref{para:ah-not-impl}); the fact that duplex connections requires two SAs, increasing memory overhead; the complexities incurred by using traffic flow as primitives in the security policy\footnote{Good examples of this are found on p. 42 in RFC 5996 which concerns Traffic Selector negotiation and p. 24 in RFC 4301 on the topic of SPD de-correlation.}. Naturally, this complexity puts the suitability of the IPsec/IKEv2 suite into question as it increases hardware requirements. Furthermore, the security provided by IPsec will often have to be complemented in the application layer as applications themselves often use other security primitives than than those of IPsec (which discriminates on hosts, transport protocols and the latter's properties such as ports). A good example of this is TLS commonly used by HTTP web services, which allow identification of the user.
 
 This brings us to the next problem, namely that of network topologies and routing. The SPD, in its standard form as per RFC 4301, expects the network environment to be known at the time of SPD configuration, which was the common case of Internet architecture in the mid-90s when the standard was formulated. This presents a problem in environments that requires dynamic routing, such as the mesh networks\footnote{Mesh networks are networks typically composed of several network terminals that communicates wirelessly and doesn't have any preconception of the network's topology. They are said to form mesh networks when they, aided by a routing protocol such as RPL, create ad-hoc routing topologies with the intent of creating reliable network routes.} commonly used by IoT systems. A protocol for forming such a mesh network is the RPL protocol (described in \cite{rfc6550}) which is commonly used by Contiki. As there is often no knowledge of the network topology before RPL's `handshake', the configuration of the SPD has to be postponed until then. This problem can be resolved by dynamically configuring the SPD on the basis of information derived from RPL, but no such scheme has been devised to my knowledge.
 
 One possible solution to these concerns is to allow the application layer to configure SAs by means of `IPsec channels' as described in RFC 5660 \cite{rfc5660}. Leaving some of the policy decisions to the application allows security based upon other primitives than described above, such as user-based ones. Still, such a framework would only increase the complexity of the implementation as it's essentially an extension to IPsec, and not a replacement of any internals.
 
+Although the reader might find this criticism harsh, I believe it's warranted. Though, I would like to you to keep in mind that this criticism concerns the standards as a whole, and not their parts. For example, I regard the ESP protocol to be a rather elegant solution to the problem of IP security, and that it possibly could be re-used in another security standard.
 
 %The arguably greatest benefit benefit of IPsec is that it single-handedly provides authentication to IPsec se
 
@@ -1379,13 +1429,23 @@ One possible solution to these concerns is to allow the application layer to con
 
 \section{Future Work and Recommendations}
 \label{sec:fw}
+If this implementation is to be used in a production environment it needs to be improved both in terms of quality and in terms of features. The later is important for interoperability.
 
-A good source of entropy needs to be found and exploited.
+Still, even though I have shown that IPsec and IKEv2 probably can be used in real-world applications, the benefits of this are dubious for reasons described previously in this chapter. Therefore I recommend that future research be turned towards other standards, unless IPsec / IKEv2 is required for integration with an existing network.
 
-%Ditch IPsec 
+Furthermore, this work also revealed a problem that is in common to all security protocol implementations on Contiki - the lack of a source of entropy for initialization of security parameters e.g. private keys. The implementation of such a system service might serve as a suitable subject for a bachelor thesis.
 
-   
 \chapter{Conclusion}
+The research question of this thesis was:
+\begin{quotation}
+Can IPsec and IKEv2 be implemented within the current hardware boundaries while still being interoperable with other Internet hosts?
+\end{quotation}
+My conclusion, based on the results presented in this thesis, is as follows:
+\begin{quotation}
+Yes, IPsec and IKEv2 can be implemented in such a manner that interoperability with the vast majority of Internet hosts is achievable. However, other standards for secure communication (such as TLS) are probably more suitable for the IoT.
+\end{quotation}
+
+
 %Is usable now and will become even better with the new reference platform. Still, there's plenty of evidence that IPsec/IKEv2 is not an interesting technology for IoT / Contiki.
 
 
